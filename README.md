@@ -344,19 +344,121 @@ F1 mean ± standard deviation
 
 如果只能运行一次，需要在 limitations 中说明。
 
-### 7.5 所有方法必须直接对同一测试文件输出预测
+### 7.5 所有方法必须使用统一的模型输入和标准输出
 
-所有正式方法，包括 B1、B2、T1、T2、X1 和 X2，都必须读取同一个测试集：
+数据与分词负责人 A 已经完成原始语料解析、标题与摘要拼接、BioBERT/PubMedBERT 分词和字符 offset 映射。所有正式方法，包括 B1、B2、T1、T2、X1 和 X2，都必须直接使用 `Dataset/TokenizedData` 中对应模型的数据作为训练、验证和测试输入，不得自行重新分词或生成另一套字符坐标。
 
 ```text
-Dataset/ProcessedData/test.jsonl
+Dataset/TokenizedData/
+├── BioBERT/
+│   ├── NCBI_training.jsonl
+│   ├── NCBI_validation.jsonl
+│   └── NCBI_testing.jsonl
+└── PubMedBERT/
+    ├── NCBI_training.jsonl
+    ├── NCBI_validation.jsonl
+    └── NCBI_testing.jsonl
 ```
 
-每个方法必须对其中全部 100 条记录逐条预测，并生成独立的 JSONL 文件。禁止覆盖或修改原始 `test.jsonl`。
+任务与输入目录的对应关系为：
 
-建议统一命名：
+| 实验 | 必须使用的输入目录 |
+|---|---|
+| B1、T1、X1（BioBERT） | `Dataset/TokenizedData/BioBERT/` |
+| B2、T2、X2（PubMedBERT） | `Dataset/TokenizedData/PubMedBERT/` |
+
+Validation 用于选择超参数和 checkpoint；Test 只能在配置冻结后用于最终评估。禁止覆盖或修改 A 提供的 TokenizedData 文件。
+
+#### 7.5.1 统一模型输入
+
+每行 JSON 表示一篇已经由 A 完成分词的文档。BioBERT 和 PubMedBERT 的 token 内容与数量可以不同，但字段结构完全相同：
+
+```json
+{
+  "record_id": "NCBI_training-0000",
+  "pmid": "10192393",
+  "model": "dmis-lab/biobert-base-cased-v1.1",
+  "tokenizer": "google-bert/bert-base-cased",
+  "text": "A common human skin tumour ...",
+  "entities": [
+    {
+      "start": 15,
+      "end": 26
+    }
+  ],
+  "tokens": ["A", "common", "human", "skin", "t", "##umour"],
+  "input_ids": [138, 1887, 1769, 2241, 189, 27226],
+  "attention_mask": [1, 1, 1, 1, 1, 1],
+  "offset_mapping": [
+    {"start": 0, "end": 1},
+    {"start": 2, "end": 8},
+    {"start": 9, "end": 14},
+    {"start": 15, "end": 19},
+    {"start": 20, "end": 21},
+    {"start": 21, "end": 26}
+  ]
+}
+```
+
+输入约束：
+
+- `text` 已由 A 严格按照 `title + " " + abstract` 构造，不得再次清洗、规范化或修改；
+- `record_id` 是连接 tokenized input、gold 和 prediction 的唯一键，不能只使用 PMID；
+- `tokens`、`input_ids`、`attention_mask` 和 `offset_mapping` 必须按相同下标一一对应，长度必须相等；
+- `offset_mapping` 中的 `start` 和 `end` 是相对于完整 `text` 的全局字符坐标；
+- `entities` 只包含 gold 的 `start` 和 `end`。训练时可以结合 `offset_mapping` 生成 BIO 监督标签；Validation/Test 推理时不得将 gold `entities` 作为模型特征；
+- 各实验必须使用对应目录中已经生成的 `input_ids` 和 token offset，不得再次调用 tokenizer 重新分词；
+- 模型负责人可以根据训练需要添加特殊 token、padding、BIO 标签或滑动窗口，但必须以 A 提供的 token 序列和全局 offset 为唯一基础，且不能改变原文坐标；
+- `attention_mask` 的 `1` 表示有效 token；后续 padding 位置使用 `0`，不能把 `attention_mask` 改作 BIO 标签或预测结果字段。
+
+#### 7.5.2 模型负责人必须完成的处理
+
+分工边界如下：
 
 ```text
+A 已完成：
+RawData
+    -> title + " " + abstract
+    -> BioBERT/PubMedBERT tokenizer
+    -> tokens、input_ids、attention_mask、offset_mapping
+    -> Dataset/TokenizedData 对应目录
+
+各模型负责人完成：
+读取对应 TokenizedData
+    -> 生成训练 BIO 标签并训练模型
+    -> 在 Validation/Test 上推理
+    -> token/window 预测聚合
+    -> BIO 序列解码
+    -> 原文字符区间 [start, end)
+    -> 去重和排序
+    -> 标准预测 JSONL
+```
+
+每个模型负责人必须直接读取对应 TokenizedData 完成训练和测试，并在提交预测文件前完成：
+
+```text
+模型 logits
+    -> token 标签
+    -> 滑动窗口重叠结果聚合
+    -> BIO 序列解码
+    -> 原文字符区间 [start, end)
+    -> 去重和排序
+```
+
+统一评估程序不负责重新分词、token 聚合、滑动窗口合并或 BIO 解码，只接收已经恢复到原文全局字符坐标的实体区间。模型负责人交付给 A 的结果必须符合下一节的标准预测输出格式。
+
+#### 7.5.3 标准预测输出
+
+每种方法必须为 Validation 和 Test 分别生成独立的 JSONL 文件。建议统一命名：
+
+```text
+predictions/B1_validation_predictions.jsonl
+predictions/B2_validation_predictions.jsonl
+predictions/T1_validation_predictions.jsonl
+predictions/T2_validation_predictions.jsonl
+predictions/X1_validation_predictions.jsonl
+predictions/X2_validation_predictions.jsonl
+
 predictions/B1_test_predictions.jsonl
 predictions/B2_test_predictions.jsonl
 predictions/T1_test_predictions.jsonl
@@ -365,48 +467,65 @@ predictions/X1_test_predictions.jsonl
 predictions/X2_test_predictions.jsonl
 ```
 
-预测文件应保持与 `test.jsonl` 相似的逐行 JSON 结构，并至少包含：
+每篇文档的标准预测输出只能包含文档标识和模型识别出的实体字符区间：
 
 ```json
 {
-  "record_id": "test-0000",
+  "record_id": "NCBI_testing-0000",
   "pmid": "9949209",
-  "text": "...",
   "entities": [
     {
       "start": 346,
-      "end": 360,
-      "text": "Wilson disease",
-      "label": "DISEASE",
-      "score": 0.987
+      "end": 360
+    },
+    {
+      "start": 512,
+      "end": 527
     }
-  ],
-  "experiment_id": "B1",
-  "model": "BioBERT"
+  ]
 }
 ```
 
-字段约束：
+没有识别出实体时也必须输出对应文档：
 
-- `record_id` 必须与 `test.jsonl` 完全一致，并作为 gold 与 prediction 的连接键；
-- 每条测试记录必须恰好出现一次，包括预测不到任何实体的记录；
-- `start` 和 `end` 必须使用与原数据相同的字符 offset 约定，其中 `end` 为不包含的结束位置；
-- 必须满足 `text[start:end] == entity["text"]`；
-- `entities` 按 `start`、`end` 排序，避免重复实体；
-- `score` 可选，但如果输出就必须明确其含义；
-- 当前主任务只预测 `DISEASE`，不要求模型预测 `mention_type` 或 `concept_id`；
-- `annotated_text`、`mention_type`、`concept_id` 和 `text_matches_annotation` 属于 gold 标注或分析信息，不能从 gold 文件复制到预测结果中冒充模型输出。
+```json
+{
+  "record_id": "NCBI_testing-0001",
+  "pmid": "1234567",
+  "entities": []
+}
+```
 
-统一评估程序按照 `record_id` 读取两个文件，并严格比较实体字符区间：
+输出约束：
+
+- 每篇 Validation/Test 文档必须恰好出现一次，包括预测不到任何实体的文档；
+- `record_id` 和 `pmid` 必须与对应输入记录一致；
+- `start` 和 `end` 必须是相对于完整 `text` 的全局字符 offset；
+- 字符区间统一使用 `[start, end)`，其中 `start` 包含、`end` 不包含；
+- 每个预测必须满足 `0 <= start < end <= len(text)`；
+- `entities` 必须按 `start`、`end` 升序排列，并删除重复的 `(start, end)`；
+- 标准输出的实体对象只包含 `start` 和 `end`，不包含 token、BIO 标签、label、实体文本、score、logits、attention mask 或窗口编号；
+- 模型配置、checkpoint、随机种子和实验名称保存在独立配置或指标文件中；
+- 禁止从 gold 文件复制 `entities` 作为模型预测。
+
+#### 7.5.4 统一实体级评估
+
+统一评估程序按照 `record_id` 连接 gold 与 prediction，并严格比较实体字符区间：
 
 ```python
 gold_spans = {(e["start"], e["end"]) for e in gold_record["entities"]}
 pred_spans = {(e["start"], e["end"]) for e in pred_record["entities"]}
+
+true_positives = len(gold_spans & pred_spans)
+false_positives = len(pred_spans - gold_spans)
+false_negatives = len(gold_spans - pred_spans)
 ```
 
-只有 `start` 和 `end` 都完全相同才算 True Positive。部分重叠或只预测出疾病名称的一部分，都不能算正确实体。
+只有 `start` 和 `end` 都完全相同才算 True Positive。部分重叠、只识别出疾病名称的一部分或只预测正确起点，都不能算完整实体正确。主指标为严格实体级 Precision、Recall 和 F1。
 
-每个预测文件还应配套保存指标文件：
+可以额外报告 Start-boundary Precision、Recall 和 F1，用于分析模型是否正确识别疾病实体的起始位置，但该指标不能替代严格实体级 F1。
+
+每个测试预测文件还应配套保存指标文件：
 
 ```text
 results/B1_test_metrics.json
@@ -493,7 +612,7 @@ results/X2_test_metrics.json
 - Test Precision、Recall、F1；
 - 最佳 checkpoint 的选择依据；
 - 逐样本预测文件；
-- 与 `Dataset/ProcessedData/test.jsonl` 一一对应的标准测试预测 JSONL；
+- 与对应模型目录下 `Dataset/TokenizedData/*/NCBI_testing.jsonl` 一一对应的标准测试预测 JSONL；
 - 独立的测试指标 JSON 文件；
 - 训练日志；
 - 失败或异常说明。
@@ -544,7 +663,7 @@ results/X2_test_metrics.json
 - [ ] PubMedBERT 独立拓展和消融；
 - [ ] 严格实体级 Precision、Recall、F1；
 - [ ] 逐样本预测文件；
-- [ ] B1、B2、T1、T2、X1、X2 均输出与 `test.jsonl` 一一对应的标准预测 JSONL；
+- [ ] B1、B2、T1、T2、X1、X2 均输出与 `NCBI_testing.jsonl` 一一对应的标准预测 JSONL；
 - [ ] 所有预测都通过 `record_id` 和严格字符 span 与 gold test set 比较；
 - [ ] 数据分析和误差分析；
 - [ ] 公平比较、最终结论和限制说明；
