@@ -383,19 +383,28 @@ Validation 用于选择超参数和 checkpoint；Test 只能在配置冻结后�
   "entities": [
     {
       "start": 15,
-      "end": 26
+      "end": 26,
+      "type": "SpecificDisease"
     }
   ],
   "tokens": ["A", "common", "human", "skin", "t", "##umour"],
   "input_ids": [138, 1887, 1769, 2241, 189, 27226],
   "attention_mask": [1, 1, 1, 1, 1, 1],
   "offset_mapping": [
-    {"start": 0, "end": 1},
-    {"start": 2, "end": 8},
-    {"start": 9, "end": 14},
-    {"start": 15, "end": 19},
-    {"start": 20, "end": 21},
-    {"start": 21, "end": 26}
+    [0, 1],
+    [2, 8],
+    [9, 14],
+    [15, 19],
+    [20, 21],
+    [21, 26]
+  ],
+  "bio_tags": [
+    "O",
+    "O",
+    "O",
+    "B-SpecificDisease",
+    "I-SpecificDisease",
+    "I-SpecificDisease"
   ]
 }
 ```
@@ -405,10 +414,11 @@ Validation 用于选择超参数和 checkpoint；Test 只能在配置冻结后�
 - `text` 已由 A 严格按照 `title + " " + abstract` 构造，不得再次清洗、规范化或修改；
 - `record_id` 是连接 tokenized input、gold 和 prediction 的唯一键，不能只使用 PMID；
 - `tokens`、`input_ids`、`attention_mask` 和 `offset_mapping` 必须按相同下标一一对应，长度必须相等；
-- `offset_mapping` 中的 `start` 和 `end` 是相对于完整 `text` 的全局字符坐标；
-- `entities` 只包含 gold 的 `start` 和 `end`。训练时可以结合 `offset_mapping` 生成 BIO 监督标签；Validation/Test 推理时不得将 gold `entities` 作为模型特征；
+- `offset_mapping` 的每一项是 `[start, end]`，表示相对于完整 `text` 的全局半开字符区间 `[start, end)`；
+- Training 的 `entities` 包含 gold `start`、`end` 和 `type`，`bio_tags` 与 WordPiece 一一对应；
+- Validation/Test 保留 `entities` 和 `bio_tags` 字段，但内容固定为 `[]`；
 - 各实验必须使用对应目录中已经生成的 `input_ids` 和 token offset，不得再次调用 tokenizer 重新分词；
-- 模型负责人可以根据训练需要添加特殊 token、padding、BIO 标签或滑动窗口，但必须以 A 提供的 token 序列和全局 offset 为唯一基础，且不能改变原文坐标；
+- 模型负责人可以根据训练需要添加特殊 token、padding 或滑动窗口，但必须以 A 提供的 token 序列、typed-BIO 标签和全局 offset 为唯一基础，且不能改变原文坐标；
 - `attention_mask` 的 `1` 表示有效 token；后续 padding 位置使用 `0`，不能把 `attention_mask` 改作 BIO 标签或预测结果字段。
 
 #### 7.5.2 模型负责人必须完成的处理
@@ -420,80 +430,99 @@ A 已完成：
 RawData
     -> title + " " + abstract
     -> BioBERT/PubMedBERT tokenizer
-    -> tokens、input_ids、attention_mask、offset_mapping
+    -> typed-BIO 标签与 WordPiece 对齐
+    -> tokens、input_ids、attention_mask、offset_mapping、bio_tags
+    -> Validation/Test gold 字段遮掩
     -> Dataset/TokenizedData 对应目录
 
 各模型负责人完成：
 读取对应 TokenizedData
-    -> 生成训练 BIO 标签并训练模型
+    -> 将 Training bio_tags 映射为 label ID 并训练模型
     -> 在 Validation/Test 上推理
-    -> token/window 预测聚合
-    -> BIO 序列解码
-    -> 原文字符区间 [start, end)
+    -> token/window logits 聚合
+    -> typed-BIO 约束解码
+    -> 原文字符区间 [start, end) 与实体 type
     -> 去重和排序
-    -> 标准预测 JSONL
+    -> 标准预测 list[dict]
 ```
 
-每个模型负责人必须直接读取对应 TokenizedData 完成训练和测试，并在提交预测文件前完成：
+每个模型负责人必须直接读取对应 TokenizedData 完成训练和测试，并在调用评估函数前完成：
 
 ```text
 模型 logits
-    -> token 标签
-    -> 滑动窗口重叠结果聚合
-    -> BIO 序列解码
-    -> 原文字符区间 [start, end)
+    -> 滑动窗口重叠 logits 聚合
+    -> typed-BIO 与 WordPiece 合法性约束
+    -> typed-BIO 序列解码
+    -> 原文字符区间 [start, end) 与实体 type
     -> 去重和排序
 ```
 
 统一评估程序不负责重新分词、token 聚合、滑动窗口合并或 BIO 解码，只接收已经恢复到原文全局字符坐标的实体区间。模型负责人交付给 A 的结果必须符合下一节的标准预测输出格式。
 
-#### 7.5.3 标准预测输出
+##### 7.5.2.1 typed-BIO 训练与推理约束
 
-每种方法必须为 Validation 和 Test 分别生成独立的 JSONL 文件。建议统一命名：
+本项目统一使用 `O` 加四种实体类型各自的 `B-`、`I-` 标签，共 `4 * 2 + 1 = 9` 类：
 
 ```text
-predictions/B1_validation_predictions.jsonl
-predictions/B2_validation_predictions.jsonl
-predictions/T1_validation_predictions.jsonl
-predictions/T2_validation_predictions.jsonl
-predictions/X1_validation_predictions.jsonl
-predictions/X2_validation_predictions.jsonl
-
-predictions/B1_test_predictions.jsonl
-predictions/B2_test_predictions.jsonl
-predictions/T1_test_predictions.jsonl
-predictions/T2_test_predictions.jsonl
-predictions/X1_test_predictions.jsonl
-predictions/X2_test_predictions.jsonl
+O
+B-SpecificDisease / I-SpecificDisease
+B-DiseaseClass / I-DiseaseClass
+B-CompositeMention / I-CompositeMention
+B-Modifier / I-Modifier
 ```
 
-每篇文档的标准预测输出只能包含文档标识和模型识别出的实体字符区间：
+训练数据约束：
 
-```json
-{
-  "record_id": "NCBI_testing-0000",
-  "pmid": "9949209",
-  "entities": [
+- 所有模型必须使用相同的 `LABEL2ID` 和 `ID2LABEL`，不得自行调整标签顺序；
+- Training 的 `bio_tags` 必须与 `tokens`、`input_ids`、`attention_mask` 和 `offset_mapping` 按下标一一对应；
+- `[CLS]`、`[SEP]`、padding 和其他不参与监督的位置统一使用 `-100`，不得当作 `O` 参与 loss；
+- Validation/Test 的 `entities=[]`、`bio_tags=[]` 是主动遮掩。不得从 RawData、ProcessedData 或其他 gold 文件恢复标签，也不得将其用于 loss、输入特征、数据增强或阈值拟合；
+- baseline 先使用普通 cross-entropy。加权 cross-entropy、focal loss 或重采样只能作为独立实验，且类别权重只能由 Training 统计得到；
+- token accuracy 只能作为诊断指标，不能替代 typed entity-level F1，也不能单独作为 checkpoint 选择依据；
+
+滑动窗口约束：
+
+- 窗口内的 `offset_mapping` 必须继续使用全文全局字符坐标，不得转换成窗口局部坐标；
+- `[CLS]`、`[SEP]` 和 padding 的标签使用 `-100`；正文 token 保留原始 typed-BIO 标签；
+- 重叠窗口必须先按照全局 token 位置聚合 logits，再进行一次全局 typed-BIO 解码；禁止每个窗口独立解码后直接拼接实体；
+- 必须记录被窗口边界截断的实体数量；任何方法都不能静默丢弃或缩短这些实体；
+
+typed-BIO 合法转移约束：
+
+- 序列开头或 `O` 后只能出现 `O` 或 `B-X`，不能直接出现 `I-X`；
+- `B-X` 或 `I-X` 后若继续使用 `I`，类型必须仍为 `X`；`I-Y`（`X != Y`）属于非法转移；
+- 相邻但类型不同的实体必须由新的 `B-Y` 开始；
+- 若逐 token argmax 产生非法 `I-X`，统一将其按 `B-X` 处理；正式实验优先使用带合法转移限制的 Viterbi 解码；
+- 对以 `##` 开头的 WordPiece，不允许在同一单词内部新建实体或切换类型：前一 WordPiece 为 `O` 时保持 `O`，前一 WordPiece 属于类型 `X` 时只能继续为 `I-X`；
+- 不得用多数投票强行合并连续但类型冲突的预测，这会掩盖模型真实的类型错误；
+
+解码与评估约束：
+
+- 每个预测实体必须通过首尾 WordPiece 的全局 offset 恢复为 `start`、`end` 和 `type`；
+- 类型切换必须形成新的实体边界，最终预测按 `(start, end, type)` 去重和排序；
+- 严格评估只有在 `start`、`end` 和 `type` 三项均正确时才记为 True Positive；边界正确但类型错误时记为一个 False Positive 和一个 False Negative；
+- 除 Micro F1 外，还必须报告 Macro F1、每种实体类型的 Precision/Recall/F1、类型 confusion matrix、非法 BIO 转移数和 WordPiece 内部类型冲突数。
+
+#### 7.5.3 标准预测输出
+
+每种方法必须在内存中生成一个 Python `list[dict]`，然后直接传给统一评估函数，不需要先将预测结果保存为 JSONL。列表中的每个字典对应一篇文档，并且只能包含文档标识和模型识别出的实体字符区间：
+
+```python
+prediction_records = [
     {
-      "start": 346,
-      "end": 360
+        "record_id": "NCBI_testing-0000",
+        "pmid": "9949209",
+        "entities": [
+            {"start": 346, "end": 360, "type": "SpecificDisease"},
+            {"start": 512, "end": 527, "type": "DiseaseClass"},
+        ],
     },
     {
-      "start": 512,
-      "end": 527
-    }
-  ]
-}
-```
-
-没有识别出实体时也必须输出对应文档：
-
-```json
-{
-  "record_id": "NCBI_testing-0001",
-  "pmid": "1234567",
-  "entities": []
-}
+        "record_id": "NCBI_testing-0001",
+        "pmid": "1234567",
+        "entities": [],
+    },
+]
 ```
 
 输出约束：
@@ -503,29 +532,110 @@ predictions/X2_test_predictions.jsonl
 - `start` 和 `end` 必须是相对于完整 `text` 的全局字符 offset；
 - 字符区间统一使用 `[start, end)`，其中 `start` 包含、`end` 不包含；
 - 每个预测必须满足 `0 <= start < end <= len(text)`；
-- `entities` 必须按 `start`、`end` 升序排列，并删除重复的 `(start, end)`；
-- 标准输出的实体对象只包含 `start` 和 `end`，不包含 token、BIO 标签、label、实体文本、score、logits、attention mask 或窗口编号；
+- 每个实体的 `type` 必须属于 `SpecificDisease`、`DiseaseClass`、`CompositeMention` 或 `Modifier`；
+- `entities` 必须按 `start`、`end`、`type` 升序排列，并删除重复的 `(start, end, type)`；
+- 标准输出实体只包含 `start`、`end` 和 `type`，不包含 token、BIO 标签、实体文本、score、logits、attention mask 或窗口编号；
 - 模型配置、checkpoint、随机种子和实验名称保存在独立配置或指标文件中；
 - 禁止从 gold 文件复制 `entities` 作为模型预测。
 
 #### 7.5.4 统一实体级评估
 
-统一评估程序按照 `record_id` 连接 gold 与 prediction，并严格比较实体字符区间：
+统一评估程序按照 `record_id` 连接 gold 与 prediction，并严格比较实体字符区间和实体类型：
 
 ```python
-gold_spans = {(e["start"], e["end"]) for e in gold_record["entities"]}
-pred_spans = {(e["start"], e["end"]) for e in pred_record["entities"]}
+gold_entities = {
+    (e["start"], e["end"], e["type"])
+    for e in gold_record["entities"]
+}
+pred_entities = {
+    (e["start"], e["end"], e["type"])
+    for e in pred_record["entities"]
+}
 
-true_positives = len(gold_spans & pred_spans)
-false_positives = len(pred_spans - gold_spans)
-false_negatives = len(gold_spans - pred_spans)
+true_positives = len(gold_entities & pred_entities)
+false_positives = len(pred_entities - gold_entities)
+false_negatives = len(gold_entities - pred_entities)
 ```
 
-只有 `start` 和 `end` 都完全相同才算 True Positive。部分重叠、只识别出疾病名称的一部分或只预测正确起点，都不能算完整实体正确。主指标为严格实体级 Precision、Recall 和 F1。
+只有 `start`、`end` 和 `type` 都完全相同才算 True Positive。边界正确但类型错误时计为一个 False Positive 和一个 False Negative。主指标为严格 typed exact-span Micro Precision、Recall 和 F1，并同时报告 Macro F1 与每种类型的 Precision、Recall 和 F1。
 
-可以额外报告 Start-boundary Precision、Recall 和 F1，用于分析模型是否正确识别疾病实体的起始位置，但该指标不能替代严格实体级 F1。
+除主指标外，统一评估函数还应报告忽略类型的 Exact-span F1、边界完全正确条件下的 type accuracy、类型 confusion matrix，以及 Start-boundary、End-boundary 和 Character-overlap 指标。这些指标只用于诊断，不能替代 typed exact-span F1。
 
-每个测试预测文件还应配套保存指标文件：
+##### 评估函数入口
+
+评估函数位于主 notebook 的 `4. Standardized Testing` 章节。运行该代码单元后，只使用下面这个统一入口：
+
+```python
+metrics = evaluate_model_predictions(prediction_records, split)
+```
+
+函数恰好接收两个参数：
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `prediction_records` | `list[dict]` | 模型在内存中生成的标准预测列表；列表内容必须符合 7.5.3 的格式 |
+| `split` | `str` | 只能是 `"validation"` 或 `"test"`；大小写和首尾空格会被标准化 |
+
+`split` 会自动选择 `Dataset/ProcessedData` 中的金标准，不需要也不允许调用者另行传入 gold 路径：
+
+| `split` | 自动使用的 gold 文件 |
+|---|---|
+| `"validation"` | `Dataset/ProcessedData/NCBI_validation.jsonl` |
+| `"test"` | `Dataset/ProcessedData/NCBI_testing.jsonl` |
+
+Validation 调用示例：
+
+```python
+metrics = evaluate_model_predictions(
+    validation_prediction_records,
+    "validation",
+)
+
+display(metrics_to_table(metrics).round(4))
+```
+
+配置冻结后的 Test 调用示例：
+
+```python
+metrics = evaluate_model_predictions(
+    test_prediction_records,
+    "test",
+)
+
+display(metrics_to_table(metrics).round(4))
+save_metrics(
+    metrics,
+    project_dir / "results" / "B1_test_metrics.json",
+)
+```
+
+函数返回一个 Python 字典，而不是单独一个 F1。输出结构如下：
+
+```python
+{
+    "averaging": "micro",
+    "document_count": ...,
+    "gold_entity_count": ...,
+    "predicted_entity_count": ...,
+    "exact_span": {
+        "true_positives": ...,
+        "false_positives": ...,
+        "false_negatives": ...,
+        "precision": ...,
+        "recall": ...,
+        "f1": ...,
+    },
+    "start_boundary": { ... },
+    "end_boundary": { ... },
+    "character_overlap": { ... },
+}
+```
+
+四个指标项具有相同的内部字段。`exact_span` 是正式主指标；其余三项用于边界和部分匹配分析。`metrics_to_table(metrics)` 可以将四组结果转换成表格，`save_metrics(metrics, output_path)` 可以将完整字典保存为 JSON。
+
+评估前，函数还会检查以下内容：输入是否为字典列表、预测列表是否覆盖所选划分的全部文档且没有额外文档、`record_id` 是否唯一、`pmid` 是否匹配、实体区间是否合法，以及 `entities` 是否已经排序和去重。格式不合格时函数会抛出 `TypeError` 或 `ValueError`，不会静默跳过错误记录。
+
+每次正式测试评估还应保存对应的指标文件：
 
 ```text
 results/B1_test_metrics.json
@@ -536,7 +646,7 @@ results/X1_test_metrics.json
 results/X2_test_metrics.json
 ```
 
-指标文件至少包含 `precision`、`recall`、`f1`、`true_positives`、`false_positives`、`false_negatives`、测试记录数、预测实体数、模型配置和随机种子。
+指标文件至少保存评估函数返回的完整字典。模型配置、checkpoint 和随机种子应保存在配套实验配置中，或在保存指标时作为额外元数据一同记录。
 
 ---
 
@@ -545,8 +655,9 @@ results/X2_test_metrics.json
 ### 数据和标签
 
 - 字符 offset 必须与原文一致；
-- subword 对齐时，特殊 token 和 padding 通常使用 `-100`；
-- 需要明确后续 subword 是继续使用 I 标签，还是只监督第一个 subword；
+- typed-BIO 必须使用统一的 9 类标签表，不能退回无类型的 `B-DISEASE/I-DISEASE`；
+- 当前 TokenizedData 已为正文 WordPiece 生成 typed-BIO；特殊 token 和 padding 使用 `-100`；
+- Validation/Test 中 `entities=[]`、`bio_tags=[]` 是主动遮掩，不是数据缺失；
 - 记录因截断丢失的实体；
 - max length 不足时考虑 sliding window；
 - 不要改变官方 train、validation、test 划分。
@@ -557,6 +668,8 @@ results/X2_test_metrics.json
 - 记录随机种子、依赖版本、模型 checkpoint 和设备；
 - 梯度累积后需要记录等效 batch size；
 - validation checkpoint 选择规则必须统一；
+- 记录非法 BIO 转移数、WordPiece 内部类型冲突数和各类型实体级 F1；
+- 类别加权或 focal loss 只能使用 Training 标签统计，并与未加权 baseline 分开报告；
 - 不要只保存最终指标，还要保存逐样本预测。
 
 ### 数据增强
@@ -611,13 +724,13 @@ results/X2_test_metrics.json
 - Validation Precision、Recall、F1；
 - Test Precision、Recall、F1；
 - 最佳 checkpoint 的选择依据；
-- 逐样本预测文件；
-- 与对应模型目录下 `Dataset/TokenizedData/*/NCBI_testing.jsonl` 一一对应的标准测试预测 JSONL；
 - 独立的测试指标 JSON 文件；
 - 训练日志；
 - 失败或异常说明。
 
-逐样本预测至少包含：
+统一评估直接接收内存中的标准预测列表，因此不要求额外保存预测 JSONL。若某项实验需要进行逐样本错误分析，可以自行将内存结果序列化，但序列化格式不属于评估函数接口。
+
+用于错误分析的逐样本记录可以包含：
 
 ```json
 {
@@ -662,8 +775,7 @@ results/X2_test_metrics.json
 - [ ] BioBERT 独立拓展和消融；
 - [ ] PubMedBERT 独立拓展和消融；
 - [ ] 严格实体级 Precision、Recall、F1；
-- [ ] 逐样本预测文件；
-- [ ] B1、B2、T1、T2、X1、X2 均输出与 `NCBI_testing.jsonl` 一一对应的标准预测 JSONL；
+- [ ] B1、B2、T1、T2、X1、X2 均生成与所选划分一一对应的标准内存预测列表；
 - [ ] 所有预测都通过 `record_id` 和严格字符 span 与 gold test set 比较；
 - [ ] 数据分析和误差分析；
 - [ ] 公平比较、最终结论和限制说明；
