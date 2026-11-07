@@ -617,7 +617,7 @@ save_metrics(
     "document_count": ...,
     "gold_entity_count": ...,
     "predicted_entity_count": ...,
-    "exact_span": {
+    "typed_exact": {
         "true_positives": ...,
         "false_positives": ...,
         "false_negatives": ...,
@@ -625,15 +625,48 @@ save_metrics(
         "recall": ...,
         "f1": ...,
     },
+    "typed_macro": {
+        "precision": ...,
+        "recall": ...,
+        "f1": ...,
+    },
+    "per_type": {
+        "SpecificDisease": { ... },
+        "DiseaseClass": { ... },
+        "CompositeMention": { ... },
+        "Modifier": { ... },
+    },
+    "span_only_exact": { ... },
+    "exact_span_type": {
+        "matched_span_count": ...,
+        "correct_type_count": ...,
+        "wrong_type_count": ...,
+        "accuracy": ...,
+    },
+    "type_confusion_matrix": { ... },
     "start_boundary": { ... },
     "end_boundary": { ... },
     "character_overlap": { ... },
 }
 ```
 
-四个指标项具有相同的内部字段。`exact_span` 是正式主指标；其余三项用于边界和部分匹配分析。`metrics_to_table(metrics)` 可以将四组结果转换成表格，`save_metrics(metrics, output_path)` 可以将完整字典保存为 JSON。
+各指标含义如下：
 
-评估前，函数还会检查以下内容：输入是否为字典列表、预测列表是否覆盖所选划分的全部文档且没有额外文档、`record_id` 是否唯一、`pmid` 是否匹配、实体区间是否合法，以及 `entities` 是否已经排序和去重。格式不合格时函数会抛出 `TypeError` 或 `ValueError`，不会静默跳过错误记录。
+| 返回字段 | 指标含义 | 是否考虑 type | 用途 |
+|---|---|---:|---|
+| `typed_exact` | 预测实体的 `start`、`end`、`type` 三项必须全部与 gold 相同；返回 Micro TP、FP、FN、Precision、Recall、F1 | 是 | **正式主指标**，衡量整体实体边界与类型识别能力 |
+| `typed_macro` | 分别计算四种实体类型的 Precision、Recall、F1，再对四类做算术平均 | 是 | **正式主指标**，避免结果被 `SpecificDisease` 等多数类主导 |
+| `per_type` | 分别报告 `SpecificDisease`、`DiseaseClass`、`CompositeMention`、`Modifier` 的 TP、FP、FN、Precision、Recall、F1、gold support 和预测数量 | 是 | 分析每种实体类型，尤其是少数类表现 |
+| `span_only_exact` | 只比较 `(start, end)`，忽略实体类型；起止位置必须同时完全一致 | 否 | 判断边界识别本身是否正确，并与 `typed_exact` 对比定位类型错误 |
+| `exact_span_type` | 只在预测 span 与 gold span 完全相同的实体中计算 type accuracy，同时报告 matched、correct 和 wrong type 数量 | 是 | 将类型分类错误与边界错误分离 |
+| `type_confusion_matrix` | 对边界完全匹配的实体，统计 gold type 到 predicted type 的四类混淆矩阵 | 是 | 分析具体类型之间的混淆方向 |
+| `start_boundary` | 只比较实体起点 `start`，不要求终点或类型正确 | 否 | 诊断实体起始边界错误 |
+| `end_boundary` | 只比较实体终点 `end`，不要求起点或类型正确 | 否 | 诊断实体结束边界错误 |
+| `character_overlap` | 将实体 span 展开为字符位置集合，计算 gold 与 prediction 的字符级重叠 Precision、Recall、F1 | 否 | 诊断部分匹配和边界偏移；不能代替实体级指标 |
+
+`typed_exact` 是正式 Micro 主指标，`typed_macro` 和 `per_type` 用于检查类别不均衡；`span_only_exact`、边界和字符指标用于诊断。`metrics_to_table(metrics)` 会汇总总体、宏平均、各类型和边界指标，`type_confusion_to_table(metrics)` 会生成类型混淆矩阵，`save_metrics(metrics, output_path)` 可以保存完整 JSON。
+
+评估前，函数还会检查：输入是否为字典列表、是否完整覆盖所选划分、`record_id` 是否唯一、`pmid` 是否匹配、`start/end/type` 是否合法、实体是否排序和去重，以及同一 span 是否被预测成多个 type。格式不合格时会抛出 `TypeError` 或 `ValueError`。
 
 每次正式测试评估还应保存对应的指标文件：
 
