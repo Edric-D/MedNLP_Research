@@ -1,0 +1,48 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter temporary files
+.ipynb_checkpoints/
+
+# Regenerable datasets (keep Dataset/RawData tracked)
+/Dataset/ProcessedData/
+/Dataset/TokenizedData/
+
+# Training outputs, downloaded models, and caches
+/baseline_results/
+/results/
+/outputs/
+/checkpoints/
+/models/
+/logs/
+/runs/
+/wandb/
+.cache/
+checkpoint-*/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Local secrets and editor / OS files
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+._*
+Thumbs.db
+*.swp
+*.swo
+*~
