@@ -454,3 +454,51 @@ results/E6_entity_aware_mlm_metrics.json
 ## 13. 总结
 
 > 本项目在单一 BioBERT backbone 上，先比较 Head-only、Partial 和 Full fine-tuning 三种参数更新范围，再在固定 Full NER 配置下比较 Standard Random-Token、Whole-Word 和 Entity-Aware Span 三种 MLM 任务适应策略，最终使用统一的严格 typed exact-span 实体级指标评估性能、稳定性和计算成本。
+
+## 独立运行 E1
+
+`e1_head_only.py` 冻结 BioBERT 全部 backbone 参数，只训练 9 类 typed-BIO 分类头。
+脚本读取 notebook 生成的 `Dataset/TokenizedData/BioBERT/NCBI_*.jsonl`，
+验证与测试 gold 标注单独从 `Dataset/ProcessedData/` 读取。
+使用 512-token 窗口、64-token 重叠；训练时重叠 token 只监督一次，
+推理时先平均全文同位置的 logits，再统一解码。非法 `I` 转移按 `B` 修复并计数。
+
+使用已有 Conda 环境运行：
+
+```bash
+conda run -n cs9517 python e1_head_only.py
+```
+
+默认最多 30 epochs、batch size 8、head learning rate `5e-4`、seed 42，
+连续 3 epochs 验证集 typed exact-span micro F1 未改善则停止。
+设备自动按 Metal（MPS）→ CUDA → CPU 选择。
+默认只读 Training 和 Validation，最佳 checkpoint 和指标保存在
+`results/E1_head_only/`，包含配置、Git 版本、训练历史、验证预测和运行摘要。
+每次运行需要使用空的输出目录，避免覆盖已有实验。
+MPS 没有与 CUDA 对等的峰值显存统计，此项保存为 `null`。
+
+先做小规模检查（结果不能作为正式 E1 指标）：
+
+```bash
+conda run -n cs9517 python e1_head_only.py --epochs 1 --limit-docs 2 --output-dir results/E1_smoke
+```
+
+配置冻结后，可在正式运行中显式加入 `--test`，对验证集选出的最佳模型进行测试评估。
+学习率搜索使用 `--learning-rate 1e-4`、`5e-4`、`1e-3`，
+各自指定不同 `--output-dir`，仅根据 Validation 结果选择。
+
+```bash
+conda run -n cs9517 python -m unittest test_e1 -v
+```
+
+最终选好学习率后，无需重新训练即可加载最佳模型进行一次正式测试：
+
+```bash
+conda run -n cs9517 python e1_head_only.py \
+  --evaluate-checkpoint results/E1_search/1e-3/best_checkpoint \
+  --test --output-dir results/E1_selected_test
+```
+
+上面的 checkpoint 路径应替换为验证集 F1 最高的那一组。测试结果不参与配置选择。
+
+本次 E1（seed=42）的完整选型结果和 notebook 写入材料见 [experiments/E1/README.md](experiments/E1/README.md)。
