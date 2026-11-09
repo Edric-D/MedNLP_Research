@@ -1,5 +1,8 @@
 # COMP9444 Biomedical Disease NER
 
+当前已完成数据管道、统一评估和 **E1 Head-only baseline**，并在 notebook 中复现；E2–E6 待完成。
+最终仅提交 `MedNLP_research.ipynb`。运行方式见[第 14 节](#14-notebook-运行与提交)。
+
 ## 1. 项目目标
 
 本项目使用 **BioBERT** 在 **NCBI Disease Corpus** 上完成生物医学疾病命名实体识别（Named Entity Recognition, NER）。模型的输入是 PubMed 标题和摘要，输出是原文中每个疾病 mention 的精确字符范围和类型。
@@ -23,11 +26,20 @@ hereditary hemochromatosis -> [start, end), SpecificDisease
 
 NCBI Disease Corpus 包含 793 篇 PubMed 文档，使用官方划分：
 
-| Split | 文档数 | 实体数 |
-|---|---:|---:|
-| Training | 593 | 5,145 |
-| Validation | 100 | 787 |
-| Testing | 100 | 960 |
+| Split | 文档数 | 实体数 | WordPiece token 数 | 需多窗口的文档数 |
+|---|---:|---:|---:|---:|
+| Training | 593 | 5,145 | 184,552 | 24 |
+| Validation | 100 | 787 | 32,132 | 4 |
+| Testing | 100 | 960 | 33,092 | 3 |
+
+Token 数不含 `[CLS]` / `[SEP]`；512-token 窗口最多容纳 510 个正文 token。
+
+| Mention type | Training | Validation | Testing |
+|---|---:|---:|---:|
+| SpecificDisease | 2,972 | 412 | 555 |
+| DiseaseClass | 769 | 126 | 121 |
+| CompositeMention | 115 | 35 | 20 |
+| Modifier | 1,289 | 214 | 264 |
 
 原文统一按以下方式构造：
 
@@ -67,7 +79,7 @@ Dataset/
         └── NCBI_testing.jsonl
 ```
 
-正式 NER 实验使用 `Dataset/TokenizedData/BioBERT/`。原文、token、`input_ids`、`attention_mask`、`offset_mapping` 和 `bio_tags` 必须按下标对齐。
+正式 NER 实验使用 `Dataset/TokenizedData/BioBERT/`。原文、token、`input_ids`、`attention_mask` 和 `offset_mapping` 必须按下标对齐；Training 的 `bio_tags` 同样逐 token 对齐。Validation/Testing 的分词缓存不保存 gold 标签，评估时从 `ProcessedData` 读取标注。
 
 MLM 阶段只能使用 Training 文本。Standard MLM 和 Whole-word MLM 不使用实体标签；Entity-aware MLM 可使用 Training 中的实体 offset。
 
@@ -375,12 +387,58 @@ MLM loss 只用于：
 
 | ID | Method | Encoder trainable scope | Adaptation | Precision | Recall | Micro F1 | Macro F1 | Time |
 |---|---|---|---|---:|---:|---:|---:|---:|
-| E1 | Head-only | 0 Transformer layers | None |  |  |  |  |  |
-| E2 | Partial | Last 4 layers | None |  |  |  |  |  |
-| E3 | Full | All layers | None |  |  |  |  |  |
-| E4 | Standard MLM + Full | All layers | Random-token TAPT |  |  |  |  |  |
-| E5 | WWM + Full | All layers | Whole-word TAPT |  |  |  |  |  |
-| E6 | Entity MLM + Full | All layers | Entity-aware TAPT |  |  |  |  |  |
+| E1 | Head-only | 0 Transformer layers | None | 35.96% | 54.69% | 43.39% | 29.54% | 411.93 s |
+| E2 | Partial | Last 4 layers | None | — | — | — | — | — |
+| E3 | Full | All layers | None | — | — | — | — | — |
+| E4 | Standard MLM + Full | All layers | Random-token TAPT | — | — | — | — | — |
+| E5 | WWM + Full | All layers | Whole-word TAPT | — | — | — | — | — |
+| E6 | Entity MLM + Full | All layers | Entity-aware TAPT | — | — | — | — | — |
+
+表中 Precision、Recall、Micro F1 和 Macro F1 均为 **Testing** 指标。
+Time 为所选学习率整次运行的训练、逐轮验证及 checkpoint 保存耗时，不含其他候选学习率和最终测试。
+当前结果来自 seed=42、Metal（MPS）的单次 notebook 运行；尚无跨种子均值和标准差。
+
+### 9.1 E1 配置与验证集选型
+
+| 配置 | 值 |
+|---|---|
+| Backbone | `dmis-lab/biobert-base-cased-v1.1`（全部冻结） |
+| 可训练参数 / 总参数 | 6,921 / 107,726,601 |
+| Optimizer | AdamW，weight decay=0.01，gradient clipping=1.0 |
+| Batch size / seed | 8 / 42 |
+| 最大 epochs / patience | 30 / 3 |
+| Max length / stride | 512 / 64 |
+| 最终 head learning rate / 最佳 epoch | `1e-3` / 21 |
+| 实际停止 epoch | 24（连续 3 轮验证 F1 未改善） |
+| 设备 / 峰值 GPU 显存 | MPS / 无可用峰值统计，记录为 `null` |
+
+| Head learning rate | 实际 epochs | 最佳 epoch | Validation Micro F1 | Time |
+|---|---:|---:|---:|---:|
+| 1e-4 | 4 | 1 | 0.00% | 69.53 s |
+| 5e-4 | 30 | 29 | 39.71% | 534.88 s |
+| 1e-3 | 24 | 21 | 41.84% | 411.93 s |
+
+仅按 Validation 的 typed exact-span Micro F1 选择学习率和 checkpoint，随后对 Test 评估。
+`1e-4` 因连续零 F1 在第 4 轮早停，其分数只表示本次预算和早停规则下的表现。
+
+### 9.2 E1 最终指标与错误统计
+
+| Split | Precision | Recall | Micro F1 | Macro F1 | Span-only F1 | 非法 BIO 转移 | 重叠 token 冲突 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Validation | 35.49% | 50.95% | 41.84% | 33.08% | 44.24% | 443 | 9 |
+| Testing | 35.96% | 54.69% | 43.39% | 29.54% | 44.55% | 616 | 3 |
+
+Testing 各类型表现：
+
+| Mention type | Precision | Recall | F1 | Gold support |
+|---|---:|---:|---:|---:|
+| SpecificDisease | 42.22% | 63.60% | 50.75% | 555 |
+| DiseaseClass | 14.29% | 28.10% | 18.94% | 121 |
+| CompositeMention | 2.08% | 5.00% | 2.94% | 20 |
+| Modifier | 40.53% | 51.89% | 45.51% | 264 |
+
+冻结 backbone 的 E1 在 `CompositeMention` 上仍较弱，且存在较多非法 BIO 转移。
+这是后续 E2/E3 的比较基线；单一 seed 和当前训练预算不足以支持稳定性或充分收敛的结论。
 
 如果计算资源允许，重要结果使用至少 3 个随机种子，例如 `42, 43, 44`，并报告 `mean F1 ± standard deviation`。
 
@@ -402,16 +460,28 @@ MLM loss 只用于：
 - 逐文档预测，用于错误分析；
 - 失败、OOM、中断或其他异常说明。
 
-建议结果文件命名：
+Notebook 每次执行 E1 都生成新的运行目录：
 
 ```text
-results/E1_head_only_metrics.json
-results/E2_partial_metrics.json
-results/E3_full_metrics.json
-results/E4_standard_mlm_metrics.json
-results/E5_whole_word_mlm_metrics.json
-results/E6_entity_aware_mlm_metrics.json
+results/E1_notebook/<run_id>/
+├── <learning_rate>/
+│   ├── config.json
+│   ├── history.json
+│   ├── summary.json
+│   ├── best_checkpoint/
+│   ├── validation_metrics.json
+│   └── validation_predictions.json
+├── selection.json
+├── selected_test/
+│   ├── evaluation_config.json
+│   ├── test_metrics.json
+│   └── test_predictions.json
+├── results.json
+└── learning_curves.csv
 ```
+
+Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保存后即可随 `.ipynb` 提交。
+本地生成的数据、模型和运行目录已由 `.gitignore` 排除。
 
 ---
 
@@ -426,7 +496,7 @@ results/E6_entity_aware_mlm_metrics.json
 6. 实现共享 MLM 训练器和三种 masking collator
 7. 独立生成 E4、E5、E6 的 adapted checkpoints
 8. 使用与 E3 相同的 NER 配置完成 E4、E5、E6
-9. 冻结全部方法选择后，统一运行 Testing
+9. 各方法配置冻结后运行 Testing（E1 已完成），不得基于 Test 回头调参
 10. 汇总性能、训练成本、稳定性和错误分析
 ```
 
@@ -434,16 +504,16 @@ results/E6_entity_aware_mlm_metrics.json
 
 ## 12. 最终完成标准
 
-- [ ] 可重复运行的 BioBERT NER 数据管道；
-- [ ] 固定的 9 类 typed-BIO label map；
-- [ ] 滑动窗口、重叠 logits 聚合和全局 BIO 解码；
-- [ ] E1 Head-only baseline；
+- [x] 可重复运行的 BioBERT NER 数据管道；
+- [x] 固定的 9 类 typed-BIO label map；
+- [x] 滑动窗口、重叠 logits 聚合和全局 BIO 解码；
+- [x] E1 Head-only baseline；
 - [ ] E2 Partial fine-tuning；
 - [ ] E3 Full fine-tuning；
 - [ ] E4 Standard Random-Token MLM + Full NER；
 - [ ] E5 Whole-Word MLM + Full NER；
 - [ ] E6 Entity-Aware Span MLM + Full NER；
-- [ ] 严格 typed exact-span Precision、Recall 和 F1；
+- [x] 严格 typed exact-span Precision、Recall 和 F1；
 - [ ] 公平对比的超参数、训练预算和随机种子；
 - [ ] 训练时间、可训练参数和显存成本对比；
 - [ ] 错误分析和实验限制；
@@ -455,50 +525,13 @@ results/E6_entity_aware_mlm_metrics.json
 
 > 本项目在单一 BioBERT backbone 上，先比较 Head-only、Partial 和 Full fine-tuning 三种参数更新范围，再在固定 Full NER 配置下比较 Standard Random-Token、Whole-Word 和 Entity-Aware Span 三种 MLM 任务适应策略，最终使用统一的严格 typed exact-span 实体级指标评估性能、稳定性和计算成本。
 
-## 独立运行 E1
+## 14. Notebook 运行与提交
 
-`e1_head_only.py` 冻结 BioBERT 全部 backbone 参数，只训练 9 类 typed-BIO 分类头。
-脚本读取 notebook 生成的 `Dataset/TokenizedData/BioBERT/NCBI_*.jsonl`，
-验证与测试 gold 标注单独从 `Dataset/ProcessedData/` 读取。
-使用 512-token 窗口、64-token 重叠；训练时重叠 token 只监督一次，
-推理时先平均全文同位置的 logits，再统一解码。非法 `I` 转移按 `B` 修复并计数。
+1. 打开 `MedNLP_research.ipynb`，选择已验证的 `你自己的` 内核（Python 3.10、PyTorch 2.9.0、Transformers 5.3.0），或使用具备同等依赖的环境。
+2. 从上到下运行全部单元格。首次运行需要网络连接；notebook 会安装缺失依赖、下载 NCBI 数据和模型，并生成处理后的数据，无需额外提供仓库文件。
+3. 第 5 节 E1 直接读取代码块顶部的配置，无需命令行参数。正式运行保持 `E1_SMOKE_DOCS = None`；设为 `2` 仅用于流程检查，不能作为正式实验结果。
+4. E1 会独立比较三个学习率，根据 Validation F1 选模型，再评估 Test。设备自动优先选择 Metal（MPS），其次 CUDA，最后 CPU。
+5. 运行完成后保存 notebook 及其输出，**最终仅提交该 `.ipynb` 文件**。每次重跑都会创建新的运行目录，耗时和浮点结果可能随环境变化。
 
-使用已有 Conda 环境运行：
-
-```bash
-conda run -n cs9517 python e1_head_only.py
-```
-
-默认最多 30 epochs、batch size 8、head learning rate `5e-4`、seed 42，
-连续 3 epochs 验证集 typed exact-span micro F1 未改善则停止。
-设备自动按 Metal（MPS）→ CUDA → CPU 选择。
-默认只读 Training 和 Validation，最佳 checkpoint 和指标保存在
-`results/E1_head_only/`，包含配置、Git 版本、训练历史、验证预测和运行摘要。
-每次运行需要使用空的输出目录，避免覆盖已有实验。
-MPS 没有与 CUDA 对等的峰值显存统计，此项保存为 `null`。
-
-先做小规模检查（结果不能作为正式 E1 指标）：
-
-```bash
-conda run -n cs9517 python e1_head_only.py --epochs 1 --limit-docs 2 --output-dir results/E1_smoke
-```
-
-配置冻结后，可在正式运行中显式加入 `--test`，对验证集选出的最佳模型进行测试评估。
-学习率搜索使用 `--learning-rate 1e-4`、`5e-4`、`1e-3`，
-各自指定不同 `--output-dir`，仅根据 Validation 结果选择。
-
-```bash
-conda run -n cs9517 python -m unittest test_e1 -v
-```
-
-最终选好学习率后，无需重新训练即可加载最佳模型进行一次正式测试：
-
-```bash
-conda run -n cs9517 python e1_head_only.py \
-  --evaluate-checkpoint results/E1_search/1e-3/best_checkpoint \
-  --test --output-dir results/E1_selected_test
-```
-
-上面的 checkpoint 路径应替换为验证集 F1 最高的那一组。测试结果不参与配置选择。
-
-本次 E1（seed=42）的完整选型结果和 notebook 写入材料见 [experiments/E1/README.md](experiments/E1/README.md)。
+仓库保留 `e1_head_only.py` 作为开发参考，notebook 不依赖该文件。
+前期实验的详细记录见 [E1 实验报告](experiments/E1/README.md)；上面的结果表采用最新 notebook 复现记录，耗时可能与前期运行不同。
