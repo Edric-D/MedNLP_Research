@@ -1,0 +1,160 @@
+{
+  "config": {
+    "root": "/home/administrator/MedNLP_Research",
+    "output_dir": "results/completed/5. fine-tune/5.2 E2/run_20261111_155049_836714",
+    "e1_config_path": "/home/administrator/MedNLP_Research/results/completed/5. fine-tune/5.1 E1/run_20261111_151736_154515/selected_config.json",
+    "model": "dmis-lab/biobert-base-cased-v1.1",
+    "epochs": 30,
+    "batch_size": 8,
+    "weight_decay": 0.01,
+    "scheduler": "constant",
+    "patience": 3,
+    "loss": "cross_entropy",
+    "seed": 9444,
+    "dropout": 0.1,
+    "encoder_learning_rate": 3e-05,
+    "head_learning_rate": 5e-05,
+    "max_length": 512,
+    "stride": 64,
+    "micro_batch_size": 8,
+    "cuda_fast_mode": true,
+    "cuda_evaluation_batch_size": 32,
+    "limit_docs": null,
+    "evaluate_test": true
+  },
+  "path": "/home/administrator/MedNLP_Research/results/completed/5. fine-tune/5.2 E2/run_20261111_155049_836714/5.2.2 Head learning rate/trial_01",
+  "validation_f1": 0.7232516437537357,
+  "validation": {
+    "averaging": "micro",
+    "document_count": 100,
+    "gold_entity_count": 787,
+    "predicted_entity_count": 886,
+    "typed_exact": {
+      "true_positives": 605,
+      "false_positives": 281,
+      "false_negatives": 182,
+      "precision": 0.6828442437923251,
+      "recall": 0.7687420584498094,
+      "f1": 0.7232516437537357
+    },
+    "typed_macro": {
+      "precision": 0.6138728091392028,
+      "recall": 0.7031640173233495,
+      "f1": 0.6552669494752071
+    },
+    "per_type": {
+      "SpecificDisease": {
+        "true_positives": 336,
+        "false_positives": 110,
+        "false_negatives": 76,
+        "precision": 0.7533632286995515,
+        "recall": 0.8155339805825242,
+        "f1": 0.7832167832167831,
+        "support": 412,
+        "predicted_count": 446
+      },
+      "DiseaseClass": {
+        "true_positives": 73,
+        "false_positives": 76,
+        "false_negatives": 53,
+        "precision": 0.4899328859060403,
+        "recall": 0.5793650793650794,
+        "f1": 0.530909090909091,
+        "support": 126,
+        "predicted_count": 149
+      },
+      "CompositeMention": {
+        "true_positives": 21,
+        "false_positives": 20,
+        "false_negatives": 14,
+        "precision": 0.5121951219512195,
+        "recall": 0.6,
+        "f1": 0.5526315789473684,
+        "support": 35,
+        "predicted_count": 41
+      },
+      "Modifier": {
+        "true_positives": 175,
+        "false_positives": 75,
+        "false_negatives": 39,
+        "precision": 0.7,
+        "recall": 0.8177570093457944,
+        "f1": 0.7543103448275862,
+        "support": 214,
+        "predicted_count": 250
+      }
+    },
+    "span_only_exact": {
+      "true_positives": 633,
+      "false_positives": 253,
+      "false_negatives": 154,
+      "precision": 0.7144469525959368,
+      "recall": 0.8043202033036849,
+      "f1": 0.7567244471010163
+    },
+    "exact_span_type": {
+      "matched_span_count": 633,
+      "correct_type_count": 605,
+      "wrong_type_count": 28,
+      "accuracy": 0.9557661927330173
+    },
+    "type_confusion_matrix": {
+      "SpecificDisease": {
+        "SpecificDisease": 336,
+        "DiseaseClass": 7,
+        "CompositeMention": 2,
+        "Modifier": 3
+      },
+      "DiseaseClass": {
+        "SpecificDisease": 15,
+        "DiseaseClass": 73,
+        "CompositeMention": 0,
+        "Modifier": 0
+      },
+      "CompositeMention": {
+        "SpecificDisease": 0,
+        "DiseaseClass": 0,
+        "CompositeMention": 21,
+        "Modifier": 1
+      },
+      "Modifier": {
+        "SpecificDisease": 0,
+        "DiseaseClass": 0,
+        "CompositeMention": 0,
+        "Modifier": 175
+      }
+    },
+    "start_boundary": {
+      "true_positives": 694,
+      "false_positives": 192,
+      "false_negatives": 93,
+      "precision": 0.7832957110609481,
+      "recall": 0.8818297331639136,
+      "f1": 0.8296473401075912
+    },
+    "end_boundary": {
+      "true_positives": 732,
+      "false_positives": 154,
+      "false_negatives": 55,
+      "precision": 0.8261851015801355,
+      "recall": 0.9301143583227446,
+      "f1": 0.8750747160789002
+    },
+    "character_overlap": {
+      "true_positives": 11166,
+      "false_positives": 629,
+      "false_negatives": 1224,
+      "precision": 0.9466723187791437,
+      "recall": 0.9012106537530267,
+      "f1": 0.9233822617324788
+    },
+    "illegal_bio_transitions": 110,
+    "window_overlap_token_conflicts": 3
+  },
+  "best_epoch": 12,
+  "epochs_run": 15,
+  "training_seconds": 19.017573447000814,
+  "peak_gpu_memory_bytes": 1378380800,
+  "validation_seconds": 2.1839480799999365,
+  "training_validation_wall_seconds": 21.474015771999802
+}
