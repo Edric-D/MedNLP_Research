@@ -15,7 +15,7 @@ RAW_DATA = (
     Path(__file__).resolve().parent
     / "Dataset"
     / "RawData"
-    / "NCBIdevelopset_validation.txt"
+    / "NCBI_validation.txt"
 )
 EXPECTED_MENTIONS = (
     (4, 25, "ataxia-telangiectasia"),

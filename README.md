@@ -1,5 +1,9 @@
 # COMP9444 Biomedical Disease NER
 
+**Tian Huang 完整实验报告**　[E1–E6 三种子结果与复现说明](experiments/study/README.md) · [完整 Notebook](MedNLP_research_Tian_Huang.ipynb)
+
+本报告使用独立的统一协议，完整覆盖六组实验。下文介绍仓库原有的分阶段 E1/E2 实验流程。
+
 当前已完成数据管道、统一评估，以及 Notebook 中的 **E1 Head-only baseline** 和 **E2 Partial fine-tuning**。E3–E6 待完成。
 最终仅提交 `MedNLP_research.ipynb`。运行方式见[第 14 节](#14-notebook-运行与提交)。
 
