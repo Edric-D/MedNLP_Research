@@ -374,6 +374,7 @@ def decode_document(record, tag_ids):
 # Configure direct execution without command line arguments
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
+from contextlib import nullcontext
 from zoneinfo import ZoneInfo
 import math
 import time
@@ -402,6 +403,8 @@ class E1Config:
     limit_docs: int | None = None
     evaluate_test: bool = True
     encoder_batch_size: int = 8
+    cuda_fast_mode: bool = True
+    cuda_evaluation_batch_size: int = 32
     resume: bool = False
 
 
@@ -483,18 +486,47 @@ def load_e1_split(config, tokenizer, name):
     return records, make_windows(records, tokenizer, config.max_length, config.stride)
 
 
+# Enable fast CUDA kernels while keeping a portable fallback
+def configure_runtime(config, device):
+    import torch
+
+    fast = config.cuda_fast_mode and device.type == 'cuda'
+    torch.use_deterministic_algorithms(not fast, warn_only=True)
+    if device.type == 'cuda':
+        torch.backends.cudnn.benchmark = fast
+        torch.backends.cudnn.deterministic = not fast
+        torch.set_float32_matmul_precision('high' if fast else 'highest')
+    return torch.bfloat16 if fast and torch.cuda.is_bf16_supported() else None
+
+
+# Use mixed precision only on the CUDA fast path
+def precision_context(device, amp_dtype):
+    import torch
+
+    return torch.autocast(device_type=device.type, dtype=amp_dtype) if amp_dtype is not None else nullcontext()
+
+
 # Pad windows and preserve document metadata for merged predictions
-def make_collator(tokenizer, device):
+def make_collator(tokenizer, device, align=False):
     import torch
 
     def collate(windows):
         length = max(len(window['input_ids']) for window in windows)
+        if align:
+            length = math.ceil(length / 8) * 8
         inputs = torch.tensor([w['input_ids'] + [tokenizer.pad_token_id] * (length - len(w['input_ids'])) for w in windows], device=device)
         mask = torch.tensor([[1] * len(w['input_ids']) + [0] * (length - len(w['input_ids'])) for w in windows], device=device)
         labels = torch.tensor([w['labels'] + [-100] * (length - len(w['labels'])) for w in windows], device=device)
         return windows, {'input_ids': inputs, 'attention_mask': mask, 'labels': labels}
 
     return collate
+
+
+# Use full CUDA batches while keeping the existing memory fallback
+def execution_e1_batch_sizes(config, device):
+    if device.type == 'cuda' and config.cuda_fast_mode:
+        return max(config.batch_size, config.cuda_evaluation_batch_size), config.cuda_evaluation_batch_size
+    return config.encoder_batch_size, config.batch_size
 
 
 # Bound frozen encoder memory while preserving the full head batch
@@ -527,7 +559,7 @@ def release_device_memory(torch, device):
 
 
 # Average overlapping window logits before full document decoding
-def evaluate_e1(model, records, windows, batch_size, collate, encoder_batch_size=8):
+def evaluate_e1(model, records, windows, batch_size, collate, encoder_batch_size=8, amp_dtype=None):
     import torch
     from torch.utils.data import DataLoader
 
@@ -538,7 +570,8 @@ def evaluate_e1(model, records, windows, batch_size, collate, encoder_batch_size
     with torch.no_grad():
         for batch, inputs in DataLoader(windows, batch_size=batch_size, collate_fn=collate):
             inputs.pop('labels')
-            logits = forward_e1_logits(model, inputs, encoder_batch_size).cpu()
+            with precision_context(inputs['input_ids'].device, amp_dtype):
+                logits = forward_e1_logits(model, inputs, encoder_batch_size).float().cpu()
             for row, window in enumerate(batch):
                 doc, start, end = window['doc'], window['start'], window['end']
                 values = logits[row, 1:1 + end - start]
@@ -578,40 +611,51 @@ def run_trial(config, output_dir, data):
     torch.manual_seed(config.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(config.seed)
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cudnn.deterministic = True
-    torch.use_deterministic_algorithms(True, warn_only=True)
     tokenizer, train_records, train_windows, valid_records, valid_windows = data
-    device = select_device(torch)
+    device = torch.device('cuda') if torch.cuda.is_available() else select_device(torch)
+    amp_dtype = configure_runtime(config, device)
+    encoder_batch_size, evaluation_batch_size = execution_e1_batch_sizes(config, device)
     print(f'Device: {device} | Loading model', flush=True)
     # Supply the legacy BioBERT architecture explicitly
     model_config = BertConfig.from_pretrained(
         config.model, num_labels=len(LABELS), classifier_dropout=config.dropout,
         id2label=dict(enumerate(LABELS)), label2id={label: i for i, label in enumerate(LABELS)})
-    model = AutoModelForTokenClassification.from_pretrained(config.model, config=model_config)
+    model = AutoModelForTokenClassification.from_pretrained(
+        config.model, config=model_config, **({'attn_implementation': 'sdpa'} if device.type == 'cuda' and config.cuda_fast_mode else {}))
     if not 2 < config.max_length <= model.config.max_position_embeddings:
         raise ValueError('Invalid model window length')
     configure_e1(model, config.dropout)
     model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(trainable, lr=config.learning_rate, weight_decay=config.weight_decay)
+    optimizer = torch.optim.AdamW(trainable, lr=config.learning_rate, weight_decay=config.weight_decay,
+                                  **({'fused': True} if device.type == 'cuda' and config.cuda_fast_mode else {}))
     total_steps = math.ceil(len(train_windows) / config.batch_size) * config.epochs
     scheduler = torch.optim.lr_scheduler.LambdaLR(
         optimizer, lambda step: learning_rate_factor(step, total_steps, config.scheduler))
-    weights = training_class_weights(train_windows, torch) if config.loss == 'weighted_cross_entropy' else None
-    criterion = torch.nn.CrossEntropyLoss(weight=weights.to(device) if weights is not None else None)
-    collate = make_collator(tokenizer, device)
+    weights = training_class_weights(train_windows, torch).to(device) if config.loss == 'weighted_cross_entropy' else None
+    criterion = torch.nn.CrossEntropyLoss(weight=weights)
+    collate = make_collator(tokenizer, device, align=device.type == 'cuda' and config.cuda_fast_mode)
     generator = torch.Generator().manual_seed(config.seed)
     loader = DataLoader(train_windows, batch_size=config.batch_size, shuffle=True,
                         generator=generator, collate_fn=collate)
     metadata = asdict(config)
     metadata.update(device=str(device), labels=LABELS, torch_version=torch.__version__,
+                    gpu_name=torch.cuda.get_device_name(device) if device.type == 'cuda' else None,
+                    amp_dtype=str(amp_dtype), actual_encoder_batch_size=encoder_batch_size,
+                    evaluation_batch_size=evaluation_batch_size,
+                    attention_implementation=model.config._attn_implementation,
+                    deterministic_algorithms=torch.are_deterministic_algorithms_enabled(),
+                    cuda_version=torch.version.cuda,
                     trainable_parameters=sum(p.numel() for p in trainable),
-                    class_weights=weights.tolist() if weights is not None else None,
+                    class_weights=weights.cpu().tolist() if weights is not None else None,
                     selection='maximum validation typed exact span micro F1',
                     scheduler_total_steps=total_steps, train_documents=len(train_records),
                     validation_documents=len(valid_records))
     save_json(output_dir / 'config.json', metadata)
+    print(f'Precision: {amp_dtype or torch.float32} | attention={model.config._attn_implementation} | '
+          f'encoder batch={encoder_batch_size} | evaluation batch={evaluation_batch_size}', flush=True)
+    if device.type == 'cuda':
+        torch.cuda.reset_peak_memory_stats(device)
     synchronize_device(torch, device)
     started = time.perf_counter()
     history, best_f1, stale = [], -1.0, 0
@@ -623,33 +667,36 @@ def run_trial(config, output_dir, data):
             epoch_started = time.perf_counter()
             model.train()
             model.base_model.eval()
-            loss_sum, normalizer_sum = 0.0, 0.0
+            loss_sum = torch.zeros((), device=device)
+            normalizer_sum = torch.zeros((), device=device)
             initial_lr = optimizer.param_groups[0]['lr']
             for _, inputs in loader:
                 optimizer.zero_grad(set_to_none=True)
                 labels = inputs.pop('labels')
-                logits = forward_e1_logits(model, inputs, config.encoder_batch_size)
-                loss = criterion(logits.reshape(-1, len(LABELS)), labels.reshape(-1))
+                with precision_context(device, amp_dtype):
+                    logits = forward_e1_logits(model, inputs, encoder_batch_size)
+                    loss = criterion(logits.reshape(-1, len(LABELS)), labels.reshape(-1))
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
                 optimizer.step()
                 scheduler.step()
                 # Match the weighted mean denominator used by CrossEntropy
-                supervised = labels[labels != -100]
-                denominator = float(weights[supervised.cpu()].sum()) if weights is not None else supervised.numel()
-                loss_sum += loss.item() * denominator
+                valid = labels != -100
+                denominator = (weights[labels.clamp_min(0)] * valid).sum() if weights is not None else valid.sum()
+                loss_sum += loss.detach() * denominator
                 normalizer_sum += denominator
-                del logits, loss, labels, supervised, inputs
+                del logits, loss, labels, valid, inputs
             synchronize_device(torch, device)
+            training_loss = (loss_sum / normalizer_sum).item()
             epoch_train_seconds = time.perf_counter() - epoch_started
             validation_started = time.perf_counter()
-            metrics, predictions = evaluate_e1(model, valid_records, valid_windows, config.batch_size, collate, config.encoder_batch_size)
+            metrics, predictions = evaluate_e1(model, valid_records, valid_windows, evaluation_batch_size, collate, encoder_batch_size, amp_dtype)
             synchronize_device(torch, device)
             epoch_valid_seconds = time.perf_counter() - validation_started
             training_seconds += epoch_train_seconds
             validation_seconds += epoch_valid_seconds
             f1 = metrics['typed_exact']['f1']
-            history.append({'epoch': epoch, 'training_loss': loss_sum / normalizer_sum,
+            history.append({'epoch': epoch, 'training_loss': training_loss,
                             'validation_f1': f1, 'learning_rate': initial_lr,
                             'training_seconds': epoch_train_seconds, 'validation_seconds': epoch_valid_seconds})
             if f1 > best_f1:
@@ -661,11 +708,12 @@ def run_trial(config, output_dir, data):
             else:
                 stale += 1
             save_json(output_dir / 'history.json', history)
-            print(f'Epoch {epoch:02d}/{config.epochs} | loss={loss_sum / normalizer_sum:.4f} | '
+            print(f'Epoch {epoch:02d}/{config.epochs} | loss={training_loss:.4f} | '
                   f'Val F1={f1:.2%} | best={best_f1:.2%} at epoch {best_epoch} | '
                   f'LR={initial_lr:.3g} | train={epoch_train_seconds:.1f}s | '
                   f'val={epoch_valid_seconds:.1f}s | patience={stale}/{config.patience}', flush=True)
-            release_device_memory(torch, device)
+            if device.type == 'mps':
+                release_device_memory(torch, device)
             if stale >= config.patience:
                 print(f'Early stopping at epoch {epoch}', flush=True)
                 break
@@ -678,7 +726,8 @@ def run_trial(config, output_dir, data):
                   'best_epoch': best_epoch, 'epochs_run': len(history),
                   'validation_f1': best_f1, 'validation': best_metrics,
                   'training_seconds': training_seconds, 'validation_seconds': validation_seconds,
-                  'training_validation_wall_seconds': wall_seconds}
+                  'training_validation_wall_seconds': wall_seconds,
+                  'peak_gpu_memory_bytes': torch.cuda.max_memory_allocated(device) if device.type == 'cuda' else None}
         save_json(output_dir / 'summary.json', result)
         print(f'Trial complete | best Val F1={best_f1:.2%} | '
               f'total train={training_seconds:.1f}s | total val={validation_seconds:.1f}s', flush=True)
@@ -701,17 +750,21 @@ def evaluate_final_trial(config, trial, tokenizer, test_data):
     import torch
     from transformers import AutoModelForTokenClassification, BertConfig
 
+    device = torch.device('cuda') if torch.cuda.is_available() else select_device(torch)
+    amp_dtype = configure_runtime(config, device)
+    encoder_batch_size, evaluation_batch_size = execution_e1_batch_sizes(config, device)
     model_config = BertConfig.from_pretrained(
         config.model, num_labels=len(LABELS), classifier_dropout=config.dropout,
         id2label=dict(enumerate(LABELS)), label2id={label: i for i, label in enumerate(LABELS)})
-    model = AutoModelForTokenClassification.from_pretrained(config.model, config=model_config)
+    model = AutoModelForTokenClassification.from_pretrained(
+        config.model, config=model_config, **({'attn_implementation': 'sdpa'} if device.type == 'cuda' and config.cuda_fast_mode else {}))
     configure_e1(model, config.dropout)
     model.classifier.load_state_dict(torch.load(Path(trial['path']) / 'best_head.pt', map_location='cpu', weights_only=True))
-    device = select_device(torch)
     model.to(device)
     synchronize_device(torch, device)
     started = time.perf_counter()
-    metrics, predictions = evaluate_e1(model, *test_data, config.batch_size, make_collator(tokenizer, device), config.encoder_batch_size)
+    metrics, predictions = evaluate_e1(model, *test_data, evaluation_batch_size,
+        make_collator(tokenizer, device, align=device.type == 'cuda' and config.cuda_fast_mode), encoder_batch_size, amp_dtype)
     synchronize_device(torch, device)
     save_json(Path(trial['path']) / 'test_metrics.json', metrics)
     save_json(Path(trial['path']) / 'test_predictions.json', predictions)
@@ -855,7 +908,8 @@ def run_or_reuse_trial(config, output_dir, data, runner):
         result = json.loads(summary_path.read_text(encoding='utf-8'))
         keys = ('model', 'epochs', 'batch_size', 'weight_decay', 'scheduler', 'patience',
                 'loss', 'seed', 'learning_rate', 'dropout', 'max_length', 'stride', 'limit_docs')
-        if any(result['config'].get(key) != getattr(config, key) for key in keys):
+        precision_differs = result['config'].get('cuda_fast_mode', False) != config.cuda_fast_mode
+        if precision_differs or any(result['config'].get(key) != getattr(config, key) for key in keys):
             raise ValueError(f'Saved trial configuration differs from requested trial {output_dir}')
         required = ('best_head.pt', 'validation_metrics.json', 'validation_predictions.json', 'history.json')
         if not all((output_dir / name).exists() for name in required):
@@ -873,7 +927,7 @@ def run_or_reuse_trial(config, output_dir, data, runner):
 # Execute ordered searches before opening the test split
 def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=None, render=True):
     configure_output()
-    if config.epochs < 1 or config.patience < 1 or config.batch_size < 1 or config.encoder_batch_size < 1:
+    if config.epochs < 1 or config.patience < 1 or config.batch_size < 1 or config.encoder_batch_size < 1 or config.cuda_evaluation_batch_size < 1:
         raise ValueError('Epochs patience and batch size must be positive')
     if config.limit_docs is not None and config.limit_docs < 1:
         raise ValueError('Document limit must be positive')

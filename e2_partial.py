@@ -1,7 +1,6 @@
 """E2 staged learning rate searches followed by three seed evaluation"""
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
-from contextlib import nullcontext
 import hashlib
 import json
 import math
@@ -11,8 +10,8 @@ from zoneinfo import ZoneInfo
 
 from run_outputs import result_directory
 from e1_head_only import (
-    LABELS, best_trial, configure_output, decode_document, evaluate_standardized_records,
-    learning_rate_factor, load_e1_split, make_collator, release_device_memory,
+    LABELS, best_trial, configure_output, configure_runtime, precision_context, decode_document, evaluate_standardized_records,
+    learning_rate_factor, load_e1_split, make_collator as make_e2_collator, release_device_memory,
     save_json, select_device, summarize_seeds, synchronize_device, training_class_weights,
 )
 
@@ -99,44 +98,6 @@ def inherit_e1_config(config):
     inherited = {key: values[key] for key in keys}
     inherited.update(head_learning_rate=values['learning_rate'], e1_config_path=source.resolve())
     return replace(config, **inherited)
-
-
-# Enable fast CUDA kernels while keeping a portable fallback
-def configure_runtime(config, device):
-    import torch
-
-    fast = config.cuda_fast_mode and device.type == 'cuda'
-    torch.use_deterministic_algorithms(not fast, warn_only=True)
-    if device.type == 'cuda':
-        torch.backends.cudnn.benchmark = fast
-        torch.backends.cudnn.deterministic = not fast
-        torch.set_float32_matmul_precision('high' if fast else 'highest')
-    return torch.bfloat16 if fast and torch.cuda.is_bf16_supported() else None
-
-
-# Use mixed precision only on the CUDA fast path
-def precision_context(device, amp_dtype):
-    import torch
-
-    return torch.autocast(device_type=device.type, dtype=amp_dtype) if amp_dtype is not None else nullcontext()
-
-
-# Pad CUDA sequences to a Tensor Core friendly multiple
-def make_e2_collator(tokenizer, device, align=False):
-    import torch.nn.functional as functional
-
-    base = make_collator(tokenizer, device)
-
-    def collate(windows):
-        batch, inputs = base(windows)
-        padding = (-inputs['input_ids'].shape[1]) % 8 if align else 0
-        if padding:
-            for key, value in inputs.items():
-                fill = -100 if key == 'labels' else tokenizer.pad_token_id if key == 'input_ids' else 0
-                inputs[key] = functional.pad(value, (0, padding), value=fill)
-        return batch, inputs
-
-    return collate
 
 
 # Keep the MPS memory fallback separate from CUDA throughput settings

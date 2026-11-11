@@ -188,5 +188,43 @@ class E1RecoveryTests(unittest.TestCase):
             runner.assert_called_once_with(config, partial, None)
 
 
+class E1FastModeTests(unittest.TestCase):
+    def test_cuda_uses_full_batch_with_mps_memory_fallback(self):
+        import torch
+        from dataclasses import replace
+        from e1_head_only import E1Config, execution_e1_batch_sizes
+        config = E1Config(batch_size=32)
+        self.assertEqual(execution_e1_batch_sizes(config, torch.device('cuda')), (32, 32))
+        self.assertEqual(execution_e1_batch_sizes(config, torch.device('mps')), (8, 32))
+        self.assertEqual(execution_e1_batch_sizes(replace(config, cuda_fast_mode=False), torch.device('cuda')), (8, 32))
+
+    def test_amp_updates_only_the_head(self):
+        import torch
+        from transformers import BertConfig, BertForTokenClassification
+        from e1_head_only import configure_e1, forward_e1_logits, precision_context
+        model = BertForTokenClassification(BertConfig(vocab_size=32, hidden_size=16,
+            intermediate_size=32, num_attention_heads=2, num_hidden_layers=1, num_labels=9))
+        configure_e1(model, 0.1)
+        model.train()
+        model.base_model.eval()
+        before = {name: p.detach().clone() for name, p in model.named_parameters()}
+        inputs = {'input_ids': torch.randint(0, 32, (4, 8)),
+                  'attention_mask': torch.ones(4, 8, dtype=torch.long)}
+        labels = torch.randint(0, 9, (4, 8))
+        optimizer = torch.optim.AdamW(model.classifier.parameters())
+        with precision_context(torch.device('cpu'), torch.bfloat16):
+            logits = forward_e1_logits(model, inputs, 4)
+            self.assertEqual(logits.dtype, torch.bfloat16)
+            loss = torch.nn.functional.cross_entropy(logits.reshape(-1, 9), labels.reshape(-1))
+        self.assertTrue(torch.isfinite(loss))
+        loss.backward()
+        optimizer.step()
+        self.assertFalse(torch.equal(before['classifier.weight'], model.classifier.weight))
+        for name, p in model.named_parameters():
+            if not name.startswith('classifier.'):
+                self.assertIsNone(p.grad)
+                self.assertTrue(torch.equal(p, before[name]))
+
+
 if __name__ == '__main__':
     unittest.main()
