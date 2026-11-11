@@ -130,6 +130,63 @@ class E1SearchTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Smoke'):
             run_experiment(E1Config(limit_docs=2))
 
+class E1RecoveryTests(unittest.TestCase):
+    def test_encoder_chunking_preserves_head_loss_and_gradients(self):
+        import copy
+        import torch
+        from transformers import BertConfig, BertForTokenClassification
+        from e1_head_only import configure_e1, forward_e1_logits
+        torch.manual_seed(9444)
+        original = BertForTokenClassification(BertConfig(vocab_size=32, hidden_size=16,
+            intermediate_size=32, num_attention_heads=2, num_hidden_layers=1, num_labels=9))
+        configure_e1(original, 0.2)
+        chunked = copy.deepcopy(original)
+        inputs = {'input_ids': torch.randint(0, 32, (5, 7)),
+                  'attention_mask': torch.ones(5, 7, dtype=torch.long)}
+        targets = torch.randint(0, 9, (5, 7))
+        targets[:, 0] = -100
+        criterion = torch.nn.CrossEntropyLoss(weight=torch.arange(1, 10).float())
+        outputs, gradients = [], []
+        for model, size in [(original, 5), (chunked, 2)]:
+            model.train()
+            model.base_model.eval()
+            torch.manual_seed(2026)
+            logits = model(**inputs).logits if size == 5 else forward_e1_logits(model, inputs, size)
+            criterion(logits.reshape(-1, 9), targets.reshape(-1)).backward()
+            outputs.append(logits.detach())
+            gradients.append(model.classifier.weight.grad)
+            self.assertTrue(all(p.grad is None for p in model.base_model.parameters()))
+        torch.testing.assert_close(outputs[0], outputs[1], rtol=1e-5, atol=1e-6)
+        torch.testing.assert_close(gradients[0], gradients[1], rtol=1e-5, atol=1e-6)
+
+    def test_recovery_reuses_complete_trials_and_restarts_partial_trial(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from dataclasses import asdict, replace
+        from unittest.mock import Mock
+        from e1_head_only import E1Config, run_or_reuse_trial, save_json
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            config = E1Config(resume=True)
+            complete, partial = folder / 'complete', folder / 'partial'
+            result = {'config': asdict(config), 'validation_f1': 0.42}
+            save_json(complete / 'summary.json', result)
+            for name in ('best_head.pt', 'validation_metrics.json', 'validation_predictions.json', 'history.json'):
+                (complete / name).touch()
+            runner = Mock(return_value={'new': True})
+            reused = run_or_reuse_trial(config, complete, None, runner)
+            self.assertEqual(reused['validation_f1'], 0.42)
+            runner.assert_not_called()
+            with self.assertRaisesRegex(ValueError, 'differs'):
+                run_or_reuse_trial(replace(config, learning_rate=0.1), complete, None, runner)
+            partial.mkdir()
+            (partial / 'history.json').write_text('[]')
+            self.assertEqual(run_or_reuse_trial(config, partial, None, runner), {'new': True})
+            self.assertFalse(partial.exists())
+            self.assertEqual(len(list(folder.glob('partial.interrupted_*'))), 1)
+            runner.assert_called_once_with(config, partial, None)
+
 
 if __name__ == '__main__':
     unittest.main()

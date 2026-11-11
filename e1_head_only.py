@@ -399,6 +399,8 @@ class E1Config:
     batch_improvement_threshold: float = 0.0
     limit_docs: int | None = None
     evaluate_test: bool = True
+    encoder_batch_size: int = 8
+    resume: bool = False
 
 
 # Store machine readable results without console output
@@ -493,8 +495,37 @@ def make_collator(tokenizer, device):
     return collate
 
 
+# Bound frozen encoder memory while preserving the full head batch
+def forward_e1_logits(model, inputs, encoder_batch_size=8):
+    import torch
+
+    if encoder_batch_size < 1:
+        raise ValueError('Encoder batch size must be positive')
+    if model.base_model.training or any(p.requires_grad for p in model.base_model.parameters()):
+        raise ValueError('Chunked E1 inference requires a frozen encoder in eval mode')
+    features = []
+    with torch.no_grad():
+        for start in range(0, inputs['input_ids'].shape[0], encoder_batch_size):
+            chunk = {key: value[start:start + encoder_batch_size] for key, value in inputs.items()}
+            features.append(model.base_model(**chunk).last_hidden_state)
+    hidden = torch.cat(features, dim=0) if len(features) > 1 else features[0]
+    return model.classifier(model.dropout(hidden))
+
+
+# Release device caches after live tensors have been discarded
+def release_device_memory(torch, device):
+    import gc
+
+    gc.collect()
+    if device.type == 'mps':
+        torch.mps.synchronize()
+        torch.mps.empty_cache()
+    elif device.type == 'cuda':
+        torch.cuda.empty_cache()
+
+
 # Average overlapping window logits before full document decoding
-def evaluate_e1(model, records, windows, batch_size, collate):
+def evaluate_e1(model, records, windows, batch_size, collate, encoder_batch_size=8):
     import torch
     from torch.utils.data import DataLoader
 
@@ -505,7 +536,7 @@ def evaluate_e1(model, records, windows, batch_size, collate):
     with torch.no_grad():
         for batch, inputs in DataLoader(windows, batch_size=batch_size, collate_fn=collate):
             inputs.pop('labels')
-            logits = model(**inputs).logits.cpu()
+            logits = forward_e1_logits(model, inputs, encoder_batch_size).cpu()
             for row, window in enumerate(batch):
                 doc, start, end = window['doc'], window['start'], window['end']
                 values = logits[row, 1:1 + end - start]
@@ -513,6 +544,7 @@ def evaluate_e1(model, records, windows, batch_size, collate):
                     votes[doc].setdefault(pos, set()).add(label)
                 sums[doc][start:end] += values
                 counts[doc][start:end] += 1
+            del logits, inputs
     predictions, illegal, conflicts = [], 0, 0
     for record, total, count, doc_votes in zip(records, sums, counts, votes):
         if not (count > 0).all():
@@ -594,7 +626,7 @@ def run_trial(config, output_dir, data):
             for _, inputs in loader:
                 optimizer.zero_grad(set_to_none=True)
                 labels = inputs.pop('labels')
-                logits = model(**inputs).logits
+                logits = forward_e1_logits(model, inputs, config.encoder_batch_size)
                 loss = criterion(logits.reshape(-1, len(LABELS)), labels.reshape(-1))
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
@@ -605,10 +637,11 @@ def run_trial(config, output_dir, data):
                 denominator = float(weights[supervised.cpu()].sum()) if weights is not None else supervised.numel()
                 loss_sum += loss.item() * denominator
                 normalizer_sum += denominator
+                del logits, loss, labels, supervised, inputs
             synchronize_device(torch, device)
             epoch_train_seconds = time.perf_counter() - epoch_started
             validation_started = time.perf_counter()
-            metrics, predictions = evaluate_e1(model, valid_records, valid_windows, config.batch_size, collate)
+            metrics, predictions = evaluate_e1(model, valid_records, valid_windows, config.batch_size, collate, config.encoder_batch_size)
             synchronize_device(torch, device)
             epoch_valid_seconds = time.perf_counter() - validation_started
             training_seconds += epoch_train_seconds
@@ -622,6 +655,7 @@ def run_trial(config, output_dir, data):
                 best_metrics, best_predictions = metrics, predictions
                 # Keep only the tiny trainable head while searching
                 best_state = {name: value.detach().cpu().clone() for name, value in model.classifier.state_dict().items()}
+                torch.save(best_state, output_dir / 'best_head.pt')
             else:
                 stale += 1
             save_json(output_dir / 'history.json', history)
@@ -629,6 +663,7 @@ def run_trial(config, output_dir, data):
                   f'Val F1={f1:.2%} | best={best_f1:.2%} at epoch {best_epoch} | '
                   f'LR={initial_lr:.3g} | train={epoch_train_seconds:.1f}s | '
                   f'val={epoch_valid_seconds:.1f}s | patience={stale}/{config.patience}', flush=True)
+            release_device_memory(torch, device)
             if stale >= config.patience:
                 print(f'Early stopping at epoch {epoch}', flush=True)
                 break
@@ -650,11 +685,8 @@ def run_trial(config, output_dir, data):
         save_json(output_dir / 'failure.json', {'error': repr(error), 'elapsed_seconds': time.perf_counter() - started})
         raise
     finally:
-        del model, optimizer
-        if device.type == 'mps':
-            torch.mps.empty_cache()
-        elif device.type == 'cuda':
-            torch.cuda.empty_cache()
+        del model, optimizer, scheduler, trainable, criterion, loader
+        release_device_memory(torch, device)
 
 
 # Select strictly by validation F1 and retain candidate order for ties
@@ -671,16 +703,20 @@ def evaluate_final_trial(config, trial, tokenizer, test_data):
         config.model, num_labels=len(LABELS), classifier_dropout=config.dropout,
         id2label=dict(enumerate(LABELS)), label2id={label: i for i, label in enumerate(LABELS)})
     model = AutoModelForTokenClassification.from_pretrained(config.model, config=model_config)
+    configure_e1(model, config.dropout)
     model.classifier.load_state_dict(torch.load(Path(trial['path']) / 'best_head.pt', map_location='cpu', weights_only=True))
     device = select_device(torch)
     model.to(device)
     synchronize_device(torch, device)
     started = time.perf_counter()
-    metrics, predictions = evaluate_e1(model, *test_data, config.batch_size, make_collator(tokenizer, device))
+    metrics, predictions = evaluate_e1(model, *test_data, config.batch_size, make_collator(tokenizer, device), config.encoder_batch_size)
     synchronize_device(torch, device)
     save_json(Path(trial['path']) / 'test_metrics.json', metrics)
     save_json(Path(trial['path']) / 'test_predictions.json', predictions)
-    return {'seed': config.seed, 'metrics': metrics, 'test_seconds': time.perf_counter() - started}
+    result = {'seed': config.seed, 'metrics': metrics, 'test_seconds': time.perf_counter() - started}
+    del model
+    release_device_memory(torch, device)
+    return result
 
 
 # Summarize independent seeds with sample standard deviation
@@ -809,10 +845,55 @@ def configure_output():
     transformers_logging.disable_progress_bar()
 
 
+# Reuse complete compatible trials and archive interrupted trial files
+def run_or_reuse_trial(config, output_dir, data, runner):
+    output_dir = Path(output_dir)
+    summary_path = output_dir / 'summary.json'
+    if config.resume and summary_path.exists():
+        result = json.loads(summary_path.read_text(encoding='utf-8'))
+        keys = ('model', 'epochs', 'batch_size', 'weight_decay', 'scheduler', 'patience',
+                'loss', 'seed', 'learning_rate', 'dropout', 'max_length', 'stride', 'limit_docs')
+        if any(result['config'].get(key) != getattr(config, key) for key in keys):
+            raise ValueError(f'Saved trial configuration differs from requested trial {output_dir}')
+        required = ('best_head.pt', 'validation_metrics.json', 'validation_predictions.json', 'history.json')
+        if not all((output_dir / name).exists() for name in required):
+            raise ValueError(f'Completed trial has missing files {output_dir}')
+        print(f'Reusing completed trial: {output_dir} | Val F1={result["validation_f1"]:.2%}', flush=True)
+        return result
+    if config.resume and output_dir.exists():
+        archived = output_dir.with_name(output_dir.name + '.interrupted_' +
+                    datetime.now(ZoneInfo('Australia/Sydney')).strftime('%Y%m%d_%H%M%S_%f'))
+        output_dir.rename(archived)
+        print(f'Restarting interrupted trial | Previous files: {archived}', flush=True)
+    return runner(config, output_dir, data)
+
+
+# Resume the latest failed formal run when executing the script again
+def direct_run_config():
+    config = E1Config()
+    parent = config.root / config.output_dir.parent
+    if not parent.exists():
+        return config
+    for folder in sorted(parent.glob('run_*'), reverse=True):
+        protocol_path = folder / 'protocol.json'
+        if not protocol_path.exists() or (folder / '5.1.5 Seeds and final results/summary.json').exists():
+            continue
+        protocol = json.loads(protocol_path.read_text(encoding='utf-8'))
+        if protocol.get('smoke_only') or not any(folder.rglob('failure.json')):
+            continue
+        baseline = protocol['baseline']
+        baseline['root'] = Path(baseline['root'])
+        baseline['output_dir'] = folder.resolve()
+        baseline['resume'] = True
+        print(f'Resuming failed E1 run: {folder}', flush=True)
+        return E1Config(**baseline)
+    return config
+
+
 # Execute ordered searches before opening the test split
 def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=None, render=True):
     configure_output()
-    if config.epochs < 1 or config.patience < 1 or config.batch_size < 1:
+    if config.epochs < 1 or config.patience < 1 or config.batch_size < 1 or config.encoder_batch_size < 1:
         raise ValueError('Epochs patience and batch size must be positive')
     if config.limit_docs is not None and config.limit_docs < 1:
         raise ValueError('Document limit must be positive')
@@ -822,7 +903,7 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
         config.loss, config.seed, config.dropout) != (8, 0.01, 'constant', 3, 'cross_entropy', 9444, 0.1):
         raise ValueError('Search must start from the fixed E1 baseline settings')
     output_dir = config.root / config.output_dir
-    if output_dir.exists() and any(output_dir.iterdir()):
+    if output_dir.exists() and any(output_dir.iterdir()) and not config.resume:
         raise ValueError('Choose an empty output directory to preserve earlier results')
     output_dir.mkdir(parents=True, exist_ok=True)
     print(f'E1 results: {output_dir.resolve()}', flush=True)
@@ -850,7 +931,7 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
 
     def search(name, candidates):
         print(f'\nStage: {name} | {len(candidates)} trials', flush=True)
-        trials = [trial_runner(candidate, output_dir / name / f'trial_{index:02d}', data)
+        trials = [run_or_reuse_trial(candidate, output_dir / name / f'trial_{index:02d}', data, trial_runner)
                   for index, candidate in enumerate(candidates, 1)]
         stages[name] = trials
         selected = best_trial(trials)
@@ -886,7 +967,7 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
     save_json(output_dir / 'selected_config.json', asdict(selected))
     final_dir = output_dir / '5.1.5 Seeds and final results'
     print('\nStage: 5.1.5 Seeds and final results | seeds=42, 9444, 2026', flush=True)
-    trials = [trial_runner(replace(selected, seed=seed), final_dir / f'seed_{seed}', data) for seed in [42, 9444, 2026]]
+    trials = [run_or_reuse_trial(replace(selected, seed=seed), final_dir / f'seed_{seed}', data, trial_runner) for seed in [42, 9444, 2026]]
     save_json(final_dir / 'validation_selection.json', trials)
     tests = []
     if config.evaluate_test:
@@ -905,4 +986,4 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
 
 # Run directly after editing the settings above
 if __name__ == '__main__':
-    run_experiment(E1Config())
+    run_experiment(direct_run_config())
