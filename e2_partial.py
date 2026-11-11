@@ -1,24 +1,23 @@
-"""E2: train BioBERT layers 8-11 and the typed-BIO head; freeze embeddings/layers 0-7.
-
-Run with the cs9517 Python environment. With no arguments, compare encoder
-learning rates 1e-5, 2e-5 and 3e-5 on Validation, then evaluate the selected
-checkpoint on Test. Each run gets a fresh directory. --encoder-learning-rate
-runs a single configuration instead (Test remains opt-in for that mode). Common data/window/decoding/evaluation helpers
-are imported from e1_head_only.py; E1 itself is not executed or changed.
-"""
+"""E2 staged learning rate searches followed by three seed evaluation"""
+from dataclasses import asdict, dataclass, field, replace
+from datetime import datetime
+from contextlib import nullcontext
 import hashlib
-import importlib.metadata
 import json
+import math
 from pathlib import Path
+import time
+from zoneinfo import ZoneInfo
 
 from run_outputs import result_directory
-
 from e1_head_only import (
-    LABELS, decode_document, evaluate_standardized_records,
-    index_records, load_jsonl_records, make_windows, select_device,
+    LABELS, best_trial, configure_output, decode_document, evaluate_standardized_records,
+    learning_rate_factor, load_e1_split, make_collator, release_device_memory,
+    save_json, select_device, summarize_seeds, synchronize_device, training_class_weights,
 )
 
 
+# Train only the final four encoder layers and the head
 def configure_e2(model, encoder_learning_rate=2e-5, head_learning_rate=1e-4):
     """Fix E2 to four trainable layers and create disjoint optimizer groups."""
     layers = model.base_model.encoder.layer
@@ -44,6 +43,7 @@ def configure_e2(model, encoder_learning_rate=2e-5, head_learning_rate=1e-4):
     ]
 
 
+# Keep the frozen prefix deterministic during training
 def set_e2_training_mode(model):
     """Enable dropout in the trainable layers/head, keep the frozen prefix in eval."""
     model.train()
@@ -52,349 +52,494 @@ def set_e2_training_mode(model):
         layer.eval()
 
 
-def run_trial(args, *, reserved=False):
-    """Train one independent configuration, or evaluate one selected checkpoint."""
-    import random
-    import subprocess
-    import time
+# Edit these settings before direct execution
+@dataclass(frozen=True)
+class E2Config:
+    root: Path = Path(__file__).resolve().parent
+    output_dir: Path = field(default_factory=lambda: Path('results/completed/5. fine-tune/5.2 E2') /
+                             datetime.now(ZoneInfo('Australia/Sydney')).strftime('run_%Y%m%d_%H%M%S_%f'))
+    e1_config_path: Path | None = None
+    model: str = 'dmis-lab/biobert-base-cased-v1.1'
+    epochs: int = 30
+    batch_size: int = 8
+    weight_decay: float = 0.01
+    scheduler: str = 'constant'
+    patience: int = 3
+    loss: str = 'cross_entropy'
+    seed: int = 9444
+    dropout: float = 0.1
+    encoder_learning_rate: float = 1e-5
+    head_learning_rate: float = 7.5e-4
+    max_length: int = 512
+    stride: int = 64
+    micro_batch_size: int = 8
+    cuda_fast_mode: bool = True
+    cuda_evaluation_batch_size: int = 32
+    limit_docs: int | None = None
+    evaluate_test: bool = True
+
+
+# Inherit hyperparameters from a completed formal E1 run
+def inherit_e1_config(config):
+    source = config.e1_config_path
+    if source is None:
+        folder = config.root / 'results/completed/5. fine-tune/5.1 E1'
+        candidates = sorted(folder.glob('run_*/selected_config.json'), reverse=True)
+        source = next((path for path in candidates
+                       if (path.parent / '5.1.5 Seeds and final results/summary.json').exists()
+                       and json.loads(path.read_text()).get('limit_docs') is None), None)
+        if source is None:
+            raise ValueError('No completed formal E1 run found set e1_config_path to its selected_config.json')
+    source = config.root / source
+    values = json.loads(source.read_text(encoding='utf-8'))
+    if values.get('limit_docs') is not None:
+        raise ValueError('E2 cannot inherit smoke test hyperparameters')
+    keys = ('model', 'epochs', 'batch_size', 'weight_decay', 'scheduler', 'patience',
+            'loss', 'dropout', 'max_length', 'stride')
+    inherited = {key: values[key] for key in keys}
+    inherited.update(head_learning_rate=values['learning_rate'], e1_config_path=source.resolve())
+    return replace(config, **inherited)
+
+
+# Enable fast CUDA kernels while keeping a portable fallback
+def configure_runtime(config, device):
     import torch
-    from torch.utils.data import DataLoader
-    from transformers import AutoModelForTokenClassification, AutoTokenizer, BertConfig
 
-    if not reserved and args.output_dir.exists() and any(args.output_dir.iterdir()):
-        raise ValueError('output-dir must be empty; choose a new directory for each run')
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    device = select_device(torch)
-    print(f'Device: {device}', flush=True)
-    tokenizer = AutoTokenizer.from_pretrained('google-bert/bert-base-cased', use_fast=True)
-    # The original BioBERT config predates the model_type field required by Transformers 5.
-    model_config = BertConfig.from_pretrained(
-        args.model, num_labels=len(LABELS), id2label=dict(enumerate(LABELS)),
-        label2id={label: i for i, label in enumerate(LABELS)})
-    model = AutoModelForTokenClassification.from_pretrained(args.evaluate_checkpoint or args.model, **({} if args.evaluate_checkpoint else {'config': model_config}))
-    if args.evaluate_checkpoint and model.config.id2label != dict(enumerate(LABELS)):
-        raise ValueError('Checkpoint label mapping differs from E2')
-    if args.max_length > model.config.max_position_embeddings:
-        raise ValueError('max-length exceeds model position embeddings')
-    model.to(device)
-    parameter_groups = configure_e2(model, args.encoder_learning_rate, args.head_learning_rate)
-    trainable = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(parameter_groups, weight_decay=args.weight_decay)
-    print(f"Trainable parameters: {sum(p.numel() for p in trainable):,}; "
-          f"encoder LR={args.encoder_learning_rate:g}, head LR={args.head_learning_rate:g}", flush=True)
+    fast = config.cuda_fast_mode and device.type == 'cuda'
+    torch.use_deterministic_algorithms(not fast, warn_only=True)
+    if device.type == 'cuda':
+        torch.backends.cudnn.benchmark = fast
+        torch.backends.cudnn.deterministic = not fast
+        torch.set_float32_matmul_precision('high' if fast else 'highest')
+    return torch.bfloat16 if fast and torch.cuda.is_bf16_supported() else None
 
-    def load_split(name):
-        records = load_jsonl_records(args.data_dir / f'NCBI_{name}.jsonl')
-        if args.limit_docs:
-            records = records[:args.limit_docs]
-        for record in records:
-            if record.get('model') != args.model:
-                raise ValueError('Tokenized data model differs from --model')
-            # Validate that cached token IDs still match the exact full text.
-            encoded = tokenizer(record['text'], add_special_tokens=False, return_offsets_mapping=True)
-            if encoded['input_ids'] != record['input_ids'] or [list(x) for x in encoded['offset_mapping']] != record['offset_mapping']:
-                raise ValueError(f"Tokenizer mismatch: {record['record_id']}")
-        if name != 'training':
-            # Validation/Test caches deliberately hide gold; use the evaluation source.
-            gold = index_records(load_jsonl_records(args.gold_dir / f'NCBI_{name}.jsonl'), name)
-            for record in records:
-                reference = gold[record['record_id']]
-                if reference['pmid'] != record['pmid'] or reference['text'] != record['text']:
-                    raise ValueError('Gold and tokenized documents differ')
-                record['entities'] = reference['entities']
-                record['bio_tags'] = ['O'] * len(record['input_ids'])  # Unused during inference.
-        if not records:
-            raise ValueError(f'Empty {name} split')
-        return records, make_windows(records, tokenizer, args.max_length, args.stride)
+
+# Use mixed precision only on the CUDA fast path
+def precision_context(device, amp_dtype):
+    import torch
+
+    return torch.autocast(device_type=device.type, dtype=amp_dtype) if amp_dtype is not None else nullcontext()
+
+
+# Pad CUDA sequences to a Tensor Core friendly multiple
+def make_e2_collator(tokenizer, device, align=False):
+    import torch.nn.functional as functional
+
+    base = make_collator(tokenizer, device)
 
     def collate(windows):
-        length = max(len(w['input_ids']) for w in windows)
-        inputs = torch.tensor([w['input_ids'] + [tokenizer.pad_token_id] * (length - len(w['input_ids'])) for w in windows], device=device)
-        mask = torch.tensor([[1] * len(w['input_ids']) + [0] * (length - len(w['input_ids'])) for w in windows], device=device)
-        labels = torch.tensor([w['labels'] + [-100] * (length - len(w['labels'])) for w in windows], device=device)
-        return windows, {'input_ids': inputs, 'attention_mask': mask, 'labels': labels}
+        batch, inputs = base(windows)
+        padding = (-inputs['input_ids'].shape[1]) % 8 if align else 0
+        if padding:
+            for key, value in inputs.items():
+                fill = -100 if key == 'labels' else tokenizer.pad_token_id if key == 'input_ids' else 0
+                inputs[key] = functional.pad(value, (0, padding), value=fill)
+        return batch, inputs
 
-    def evaluate(records, windows):
-        model.eval()
-        sums = [torch.zeros((len(r['input_ids']), len(LABELS))) for r in records]
-        counts = [torch.zeros(len(r['input_ids'])) for r in records]
-        votes = [{} for _ in records]
-        conflicts = 0
-        with torch.no_grad():
-            for batch, inputs in DataLoader(windows, batch_size=args.batch_size, collate_fn=collate):
-                inputs.pop('labels')
-                logits = model(**inputs).logits.cpu()
-                for row, window in enumerate(batch):
-                    doc, start, end = window['doc'], window['start'], window['end']
-                    values = logits[row, 1:1 + end - start]
-                    for pos, label in enumerate(values.argmax(-1).tolist(), start):
-                        votes[doc].setdefault(pos, set()).add(label)
-                    sums[doc][start:end] += values
-                    counts[doc][start:end] += 1
-        predictions, illegal = [], 0
-        for record, total, count, doc_votes in zip(records, sums, counts, votes):
-            assert (count > 0).all(), 'Uncovered tokens'
-            prediction, bad = decode_document(record, (total / count[:, None]).argmax(-1))
-            predictions.append(prediction)
-            illegal += bad
-            conflicts += sum(len(v) > 1 for v in doc_votes.values())
-        metrics = evaluate_standardized_records(records, predictions)
-        metrics.update(illegal_bio_transitions=illegal, window_overlap_token_conflicts=conflicts)
-        return metrics, predictions
+    return collate
 
-    def save_json(name, value):
-        (args.output_dir / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
 
-    if args.evaluate_checkpoint:
-        records, windows = load_split('testing')
-        metrics, predictions = evaluate(records, windows)
-        save_json('test_metrics.json', metrics)
-        save_json('test_predictions.json', predictions)
-        save_json('evaluation_config.json', {
-            'checkpoint': str(args.evaluate_checkpoint.resolve()),
-            'device': str(device), 'max_length': args.max_length,
-            'stride': args.stride, 'limit_docs': args.limit_docs,
-        })
-        print(f"Test typed exact F1: {metrics['typed_exact']['f1']:.4f}", flush=True)
-        return
-
-    train_records, train_windows = load_split('training')
-    valid_records, valid_windows = load_split('validation')
-    config = {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
-    config.update(experiment='E2', device=str(device), labels=LABELS,
-                  trainable_parameters=sum(p.numel() for p in trainable),
-                  total_parameters=sum(p.numel() for p in model.parameters()),
-                  torch_version=torch.__version__, frozen_scope='embeddings and Transformer layers 0-7',
-                  trainable_layers=[8, 9, 10, 11],
-                  encoder_trainable_parameters=sum(p.numel() for p in parameter_groups[0]['params']),
-                  head_trainable_parameters=sum(p.numel() for p in parameter_groups[1]['params']),
-                  transformers_version=importlib.metadata.version('transformers'),
-                  selection='maximum validation typed exact-span micro F1')
-    config['git_commit'] = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=Path(__file__).parent, capture_output=True, text=True).stdout.strip()
-    config['git_dirty'] = bool(subprocess.run(['git', 'status', '--porcelain'], cwd=Path(__file__).parent, capture_output=True, text=True).stdout.strip())
-    config['source_sha256'] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-                               for path in (Path(__file__), Path(__file__).with_name('e1_head_only.py'))}
-    save_json('config.json', config)
+# Keep the MPS memory fallback separate from CUDA throughput settings
+def execution_batch_sizes(config, device):
     if device.type == 'cuda':
-        torch.cuda.reset_peak_memory_stats()
+        return config.micro_batch_size, config.cuda_evaluation_batch_size
+    return min(config.micro_batch_size, 2), min(config.micro_batch_size, 2)
+
+
+# Use the same document level metric as E1 with a trainable encoder
+def evaluate_e2(model, records, windows, batch_size, collate, amp_dtype=None):
+    import torch
+    from torch.utils.data import DataLoader
+
+    model.eval()
+    sums = [torch.zeros((len(record['input_ids']), len(LABELS))) for record in records]
+    counts = [torch.zeros(len(record['input_ids'])) for record in records]
+    votes = [{} for _ in records]
+    with torch.no_grad():
+        for batch, inputs in DataLoader(windows, batch_size=batch_size, collate_fn=collate):
+            inputs.pop('labels')
+            with precision_context(inputs['input_ids'].device, amp_dtype):
+                logits = model(**inputs).logits.float().cpu()
+            for row, window in enumerate(batch):
+                doc, start, end = window['doc'], window['start'], window['end']
+                values = logits[row, 1:1 + end - start]
+                sums[doc][start:end] += values
+                counts[doc][start:end] += 1
+                for position, label in enumerate(values.argmax(-1).tolist(), start):
+                    votes[doc].setdefault(position, set()).add(label)
+            del logits, inputs
+    predictions, illegal, conflicts = [], 0, 0
+    for record, total, count, doc_votes in zip(records, sums, counts, votes):
+        if not (count > 0).all():
+            raise ValueError('Uncovered document tokens')
+        prediction, bad = decode_document(record, (total / count[:, None]).argmax(-1))
+        predictions.append(prediction)
+        illegal += bad
+        conflicts += sum(len(labels) > 1 for labels in doc_votes.values())
+    metrics = evaluate_standardized_records(records, predictions)
+    metrics.update(illegal_bio_transitions=illegal, window_overlap_token_conflicts=conflicts)
+    return metrics, predictions
+
+
+# Normalize micro batch gradients over the full logical batch
+def backward_e2_batch(model, inputs, weights, micro_batch_size, amp_dtype=None, return_tensors=False):
+    import torch
+    from torch.nn.functional import cross_entropy
+
+    labels = inputs['labels']
+    valid = labels != -100
+    denominator = (weights[labels.clamp_min(0)] * valid).sum() if weights is not None else valid.sum()
+    numerator = torch.zeros((), device=labels.device, dtype=torch.float32)
+    for start in range(0, labels.shape[0], micro_batch_size):
+        targets = labels[start:start + micro_batch_size]
+        chunk = {key: value[start:start + micro_batch_size] for key, value in inputs.items() if key != 'labels'}
+        with precision_context(labels.device, amp_dtype):
+            logits = model(**chunk).logits
+            loss_sum = cross_entropy(logits.reshape(-1, len(LABELS)), targets.reshape(-1),
+                                     weight=weights, ignore_index=-100, reduction='sum')
+            loss = loss_sum / denominator
+        loss.backward()
+        numerator += loss_sum.detach()
+        del logits, loss_sum, loss, chunk
+    if return_tensors:
+        return numerator, denominator.detach()
+    return numerator.item(), denominator.item()
+
+
+# Save only updated parameters and reconstruct frozen weights from BioBERT
+def save_trainable_checkpoint(model, path):
+    import torch
+
+    torch.save(snapshot_trainable_parameters(model), path)
+
+
+# Keep the best trainable weights in RAM until the trial finishes
+def snapshot_trainable_parameters(model):
+    return {name: parameter.detach().to('cpu', copy=True) for name, parameter in model.named_parameters()
+            if parameter.requires_grad}
+
+
+# Require exact coverage of the four trainable layers and the head
+def restore_trainable_checkpoint(model, path):
+    import torch
+
+    state = torch.load(path, map_location='cpu', weights_only=True)
+    expected = {name for name, parameter in model.named_parameters() if parameter.requires_grad}
+    if set(state) != expected:
+        raise ValueError('E2 checkpoint does not match the trainable parameter scope')
+    model.load_state_dict(state, strict=False)
+
+
+# Initialize every trial from original BioBERT with a seeded new head
+def run_trial(config, output_dir, data):
+    import random
+    import numpy as np
+    import torch
+    from torch.utils.data import DataLoader
+    from transformers import AutoModelForTokenClassification, BertConfig
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=False)
+    print(f'\nTrial: {output_dir} | seed={config.seed} | encoder LR={config.encoder_learning_rate:g} | '
+          f'head LR={config.head_learning_rate:g}', flush=True)
+    random.seed(config.seed)
+    np.random.seed(config.seed)
+    torch.manual_seed(config.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(config.seed)
+    tokenizer, train_records, train_windows, valid_records, valid_windows = data
+    device = torch.device('cuda') if torch.cuda.is_available() else select_device(torch)
+    amp_dtype = configure_runtime(config, device)
+    micro_batch_size, evaluation_batch_size = execution_batch_sizes(config, device)
+    model_config = BertConfig.from_pretrained(
+        config.model, num_labels=len(LABELS), classifier_dropout=config.dropout,
+        id2label=dict(enumerate(LABELS)), label2id={label: index for index, label in enumerate(LABELS)})
+    model = AutoModelForTokenClassification.from_pretrained(
+        config.model, config=model_config, **({'attn_implementation': 'sdpa'} if device.type == 'cuda' and config.cuda_fast_mode else {}))
+    groups = configure_e2(model, config.encoder_learning_rate, config.head_learning_rate)
+    if config.max_length > model.config.max_position_embeddings:
+        raise ValueError('Window length exceeds model position embeddings')
+    model.to(device)
+    trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    optimizer = torch.optim.AdamW(groups, weight_decay=config.weight_decay,
+                                  **({'fused': True} if device.type == 'cuda' and config.cuda_fast_mode else {}))
+    total_steps = math.ceil(len(train_windows) / config.batch_size) * config.epochs
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer, lambda step: learning_rate_factor(step, total_steps, config.scheduler))
+    weights = training_class_weights(train_windows, torch).to(device) if config.loss == 'weighted_cross_entropy' else None
+    collate = make_e2_collator(tokenizer, device, align=device.type == 'cuda' and config.cuda_fast_mode)
+    loader = DataLoader(train_windows, batch_size=config.batch_size, shuffle=True,
+                        generator=torch.Generator().manual_seed(config.seed), collate_fn=collate)
+    metadata = asdict(config)
+    metadata.update(device=str(device),
+                    gpu_name=torch.cuda.get_device_name(device) if device.type == 'cuda' else None,
+                    amp_dtype=str(amp_dtype), actual_micro_batch_size=micro_batch_size,
+                    evaluation_batch_size=evaluation_batch_size,
+                    attention_implementation=model.config._attn_implementation,
+                    deterministic_algorithms=torch.are_deterministic_algorithms_enabled(),
+                    cuda_version=torch.version.cuda, trainable_parameters=sum(p.numel() for p in trainable),
+                    train_documents=len(train_records), validation_documents=len(valid_records),
+                    trainable_layers=[8, 9, 10, 11], labels=LABELS,
+                    class_weights=weights.cpu().tolist() if weights is not None else None,
+                    torch_version=torch.__version__,
+                    source_sha256={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in
+                                   (Path(__file__), Path(__file__).with_name('e1_head_only.py'))})
+    save_json(output_dir / 'config.json', metadata)
+    print(f'Device: {device} | Trainable parameters: {metadata["trainable_parameters"]:,} | '
+          f'batch={config.batch_size} | micro batch={micro_batch_size} | '
+          f'precision={amp_dtype or torch.float32} | attention={model.config._attn_implementation}', flush=True)
+    synchronize_device(torch, device)
+    if device.type == 'cuda':
+        torch.cuda.reset_peak_memory_stats(device)
     started = time.perf_counter()
-    best_f1, stale, history, best_epoch = -1, 0, [], None
+    best_f1, stale, history = -1.0, 0, []
+    training_seconds, validation_seconds = 0.0, 0.0
+    best_state = None
     try:
-        for epoch in range(1, args.epochs + 1):
+        for epoch in range(1, config.epochs + 1):
+            epoch_started = time.perf_counter()
             set_e2_training_mode(model)
-            loss_sum, token_count = 0.0, 0
-            for _, inputs in DataLoader(train_windows, batch_size=args.batch_size, shuffle=True, collate_fn=collate):
+            numerator = torch.zeros((), device=device)
+            denominator = torch.zeros((), device=device)
+            rates = [group['lr'] for group in optimizer.param_groups]
+            for _, inputs in loader:
                 optimizer.zero_grad(set_to_none=True)
-                loss = model(**inputs).loss
-                loss.backward()
+                loss_sum, count = backward_e2_batch(model, inputs, weights, micro_batch_size, amp_dtype, return_tensors=True)
                 torch.nn.utils.clip_grad_norm_(trainable, 1.0)
                 optimizer.step()
-                count = int((inputs['labels'] != -100).sum().item())
-                loss_sum += loss.item() * count
-                token_count += count
-            metrics, predictions = evaluate(valid_records, valid_windows)
+                scheduler.step()
+                numerator += loss_sum
+                denominator += count
+                del inputs
+            optimizer.zero_grad(set_to_none=True)
+            synchronize_device(torch, device)
+            training_loss = (numerator / denominator).item()
+            train_time = time.perf_counter() - epoch_started
+            validation_started = time.perf_counter()
+            metrics, predictions = evaluate_e2(model, valid_records, valid_windows, evaluation_batch_size, collate, amp_dtype)
+            synchronize_device(torch, device)
+            valid_time = time.perf_counter() - validation_started
+            training_seconds += train_time
+            validation_seconds += valid_time
             f1 = metrics['typed_exact']['f1']
-            history.append({'epoch': epoch, 'training_loss': loss_sum / token_count, 'validation': metrics})
-            save_json('history.json', history)
-            print(f'Epoch {epoch}: loss={loss_sum / token_count:.4f}, validation F1={f1:.4f}', flush=True)
+            history.append({'epoch': epoch, 'training_loss': training_loss, 'validation_f1': f1,
+                            'encoder_learning_rate': rates[0], 'head_learning_rate': rates[1],
+                            'training_seconds': train_time, 'validation_seconds': valid_time})
             if f1 > best_f1:
-                best_f1, stale, best_epoch = f1, 0, epoch
-                model.save_pretrained(args.output_dir / 'best_checkpoint', safe_serialization=True)
-                tokenizer.save_pretrained(args.output_dir / 'best_checkpoint')
-                save_json('validation_metrics.json', metrics)
-                save_json('validation_predictions.json', predictions)
+                best_f1, best_epoch, stale = f1, epoch, 0
+                best_metrics = metrics
+                best_state = snapshot_trainable_parameters(model)
+                save_json(output_dir / 'validation_metrics.json', metrics)
+                save_json(output_dir / 'validation_predictions.json', predictions)
             else:
                 stale += 1
-            if stale >= args.patience:
+            save_json(output_dir / 'history.json', history)
+            print(f'Epoch {epoch:02d}/{config.epochs} | loss={training_loss:.4f} | '
+                  f'Val F1={f1:.2%} | best={best_f1:.2%} at epoch {best_epoch} | '
+                  f'encoder LR={rates[0]:.3g} | head LR={rates[1]:.3g} | '
+                  f'train={train_time:.1f}s | val={valid_time:.1f}s | patience={stale}/{config.patience}', flush=True)
+            if device.type == 'mps':
+                release_device_memory(torch, device)
+            if stale >= config.patience:
+                print(f'Early stopping at epoch {epoch}', flush=True)
                 break
-        if device.type == 'cuda':
-            torch.cuda.synchronize()
-        elif device.type == 'mps':
-            torch.mps.synchronize()
-        summary = {'best_epoch': best_epoch, 'best_validation_f1': best_f1,
-                   'training_seconds': time.perf_counter() - started,
-                   'trainable_parameters': config['trainable_parameters'],
-                   'peak_gpu_memory_bytes': torch.cuda.max_memory_allocated() if device.type == 'cuda' else None,
-                   'memory_note': 'CUDA peak allocation; MPS/CPU peak GPU memory unavailable'}
-        if args.test:
-            model = AutoModelForTokenClassification.from_pretrained(args.output_dir / 'best_checkpoint').to(device)
-            records, windows = load_split('testing')
-            metrics, predictions = evaluate(records, windows)
-            save_json('test_metrics.json', metrics)
-            save_json('test_predictions.json', predictions)
-        save_json('summary.json', summary)
+        torch.save(best_state, output_dir / 'best_trainable.pt')
+        result = {'config': asdict(config), 'path': str(output_dir.resolve()),
+                  'validation_f1': best_f1, 'validation': best_metrics, 'best_epoch': best_epoch,
+                  'epochs_run': len(history), 'training_seconds': training_seconds,
+                  'peak_gpu_memory_bytes': torch.cuda.max_memory_allocated(device) if device.type == 'cuda' else None,
+                  'validation_seconds': validation_seconds,
+                  'training_validation_wall_seconds': time.perf_counter() - started}
+        save_json(output_dir / 'summary.json', result)
+        return result
     except BaseException as error:
-        save_json('failure.json', {'error': repr(error), 'elapsed_seconds': time.perf_counter() - started})
+        save_json(output_dir / 'failure.json', {'error': repr(error), 'elapsed_seconds': time.perf_counter() - started})
         raise
+    finally:
+        del model, optimizer, scheduler, groups, trainable, loader, weights
+        release_device_memory(torch, device)
 
 
-
-def release_device_cache():
-    import gc
+# Evaluate each locked seed checkpoint on the test split
+def evaluate_final_trial(config, trial, tokenizer, test_data):
     import torch
-    gc.collect()
-    if torch.backends.mps.is_available():
-        torch.mps.empty_cache()
-    elif torch.cuda.is_available():
-        torch.cuda.empty_cache()
+    from transformers import AutoModelForTokenClassification, BertConfig
 
-
-def write_json(path, value):
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
-
-
-def run_sweep(args):
-    """Select only on Validation, freeze that choice, then evaluate Test once."""
-    keep = args.limit_docs is None and not args.validation_only
-    with result_directory(args.output_dir, keep=keep):
-        results = _run_sweep(args)
-    print(f'E2 complete | Results: {args.output_dir.resolve()}' if keep else
-          'E2 complete | Temporary results discarded', flush=True)
-    return results
-
-
-def _run_sweep(args):
-    import csv
-    from types import SimpleNamespace
-
-    root = args.output_dir
-    write_json(root / 'sweep_config.json', {
-        key: str(value) if isinstance(value, Path) else value
-        for key, value in vars(args).items()
-    })
-    candidates, curves = [], []
+    device = torch.device('cuda') if torch.cuda.is_available() else select_device(torch)
+    amp_dtype = configure_runtime(config, device)
+    _, evaluation_batch_size = execution_batch_sizes(config, device)
+    model_config = BertConfig.from_pretrained(
+        config.model, num_labels=len(LABELS), classifier_dropout=config.dropout,
+        id2label=dict(enumerate(LABELS)), label2id={label: index for index, label in enumerate(LABELS)})
+    model = AutoModelForTokenClassification.from_pretrained(
+        config.model, config=model_config, **({'attn_implementation': 'sdpa'} if device.type == 'cuda' and config.cuda_fast_mode else {}))
+    configure_e2(model, config.encoder_learning_rate, config.head_learning_rate)
+    restore_trainable_checkpoint(model, Path(trial['path']) / 'best_trainable.pt')
+    model.to(device)
+    synchronize_device(torch, device)
+    started = time.perf_counter()
     try:
-        for learning_rate in args.encoder_learning_rates:
-            label = format(learning_rate, '.8g')
-            trial = SimpleNamespace(**vars(args))
-            trial.output_dir = root / label
-            trial.encoder_learning_rate = learning_rate
-            trial.evaluate_checkpoint = None
-            trial.test = False
-            print(f'\n=== E2 encoder LR {learning_rate:g}; head LR {args.head_learning_rate:g} ===', flush=True)
-            run_trial(trial)
-            summary = json.loads((trial.output_dir / 'summary.json').read_text())
-            history = json.loads((trial.output_dir / 'history.json').read_text())
-            candidates.append({'encoder_learning_rate': learning_rate,
-                               'head_learning_rate': args.head_learning_rate,
-                               'run_dir': str(trial.output_dir.resolve()),
-                               'completed_epochs': len(history), **summary})
-            for epoch in history:
-                metrics = epoch['validation']
-                curves.append({'encoder_learning_rate': learning_rate, 'epoch': epoch['epoch'],
-                               'training_loss': epoch['training_loss'],
-                               'validation_precision': metrics['typed_exact']['precision'],
-                               'validation_recall': metrics['typed_exact']['recall'],
-                               'validation_micro_f1': metrics['typed_exact']['f1'],
-                               'validation_macro_f1': metrics['typed_macro']['f1']})
-            release_device_cache()
-        # Ties keep the first candidate in the configured order.
-        selected = max(candidates, key=lambda run: run['best_validation_f1'])
-        checkpoint = Path(selected['run_dir']) / 'best_checkpoint'
-        selection = {'criterion': 'maximum validation typed exact-span micro F1; Test excluded',
-                     'tie_break': 'first candidate in configured order',
-                     'seed': args.seed, 'limit_docs': args.limit_docs,
-                     'selected': selected, 'candidates': candidates,
-                     'checkpoint': str(checkpoint),
-                     'checkpoint_sha256': {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
-                                           for path in checkpoint.glob('*.safetensors')}}
-        write_json(root / 'selection.json', selection)  # Persist before any Test access.
-        validation = json.loads((Path(selected['run_dir']) / 'validation_metrics.json').read_text())
-        results = {'experiment': 'E2', 'selection': selection, 'validation': validation,
-                   'test': None, 'smoke_test': args.limit_docs is not None}
-        with (root / 'learning_curves.csv').open('w', newline='') as stream:
-            writer = csv.DictWriter(stream, fieldnames=list(curves[0]), lineterminator='\n')
-            writer.writeheader()
-            writer.writerows(curves)
-        print(f"\nSelected encoder LR={selected['encoder_learning_rate']:g}, "
-              f"epoch={selected['best_epoch']}, validation F1={selected['best_validation_f1']:.4f}", flush=True)
-        if not args.validation_only:
-            evaluation = SimpleNamespace(**vars(args))
-            evaluation.encoder_learning_rate = selected['encoder_learning_rate']
-            evaluation.evaluate_checkpoint = checkpoint
-            evaluation.output_dir = root / 'selected_test'
-            evaluation.test = True
-            run_trial(evaluation)
-            results['test'] = json.loads((evaluation.output_dir / 'test_metrics.json').read_text())
-            release_device_cache()
-        lines = ['# E2 partial fine-tuning', '',
-                 'SMOKE TEST ONLY: not formal results.' if args.limit_docs is not None else f'Single-seed formal run (seed={args.seed}).', '',
-                 '| Encoder LR | Epochs | Best epoch | Validation Micro F1 | Training + validation seconds |',
-                 '|---|---:|---:|---:|---:|']
-        lines += [f"| {r['encoder_learning_rate']:g} | {r['completed_epochs']} | {r['best_epoch']} | {r['best_validation_f1']:.2%} | {r['training_seconds']:.2f} |" for r in candidates]
-        lines += ['', f"Selected encoder LR: {selected['encoder_learning_rate']:g}; head LR: {args.head_learning_rate:g}; best epoch: {selected['best_epoch']}.", '',
-                  '| Split | Precision | Recall | Micro F1 | Macro F1 |', '|---|---:|---:|---:|---:|']
-        for name, metrics in [('Validation', validation), ('Test', results['test'])]:
-            if metrics is not None:
-                exact = metrics['typed_exact']
-                lines.append(f"| {name} | {exact['precision']:.2%} | {exact['recall']:.2%} | {exact['f1']:.2%} | {metrics['typed_macro']['f1']:.2%} |")
-        lines += ['', 'Selection uses Validation only. Single-seed results do not estimate uncertainty.',
-                  'MPS peak GPU memory is unavailable (null). Full per-type metrics and confusion matrices are in results.json.',
-                  'Training time includes per-epoch Validation and checkpoint saves; excludes other LR candidates and final Test.']
-        (root / 'summary.md').write_text('\n'.join(lines) + '\n')
-        write_json(root / 'results.json', results)
-        return results
-    except BaseException as error:
-        write_json(root / 'sweep_failure.json', {'error': repr(error), 'completed_candidates': candidates})
-        raise
+        metrics, predictions = evaluate_e2(model, *test_data, evaluation_batch_size,
+            make_e2_collator(tokenizer, device, align=device.type == 'cuda' and config.cuda_fast_mode), amp_dtype)
+        synchronize_device(torch, device)
+        seconds = time.perf_counter() - started
+        save_json(Path(trial['path']) / 'test_metrics.json', metrics)
+        save_json(Path(trial['path']) / 'test_predictions.json', predictions)
+        print(f'Test seed={config.seed} | micro F1={metrics["typed_exact"]["f1"]:.2%} | time={seconds:.1f}s', flush=True)
+        return {'seed': config.seed, 'metrics': metrics, 'test_seconds': seconds}
+    finally:
+        del model
+        release_device_memory(torch, device)
+
+# Save comparison tables and learning curves for each search stage
+def render_results(output_dir, stages, trials, tests, summary):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    smoke = trials[0]['config']['limit_docs'] is not None
+
+    def table(frame, folder, name, title):
+        frame.to_csv(folder / f'{name}.csv', index=False)
+        fig, ax = plt.subplots(figsize=(12, max(2.4, len(frame) * 0.4 + 1.2)))
+        ax.axis('off')
+        ax.set_title(('SMOKE CHECK | ' if smoke else '') + title, pad=16)
+        cells = ax.table(cellText=frame.values, colLabels=frame.columns, loc='center', cellLoc='center')
+        cells.auto_set_font_size(False)
+        cells.set_fontsize(9)
+        cells.scale(1, 1.5)
+        fig.tight_layout()
+        fig.savefig(folder / f'{name}.png', dpi=160, bbox_inches='tight')
+        plt.close(fig)
+
+    for stage, candidates in stages.items():
+        folder = output_dir / stage
+        rows = [{'Encoder LR': f"{t['config']['encoder_learning_rate']:g}",
+                 'Head LR': f"{t['config']['head_learning_rate']:g}",
+                 'Best epoch': t['best_epoch'], 'Val F1 %': round(t['validation_f1'] * 100, 2),
+                 'Train s': round(t['training_seconds'], 1), 'Val s': round(t['validation_seconds'], 1)} for t in candidates]
+        table(pd.DataFrame(rows), folder, 'comparison', stage)
+        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+        for index, trial in enumerate(candidates, 1):
+            history = json.loads((Path(trial['path']) / 'history.json').read_text())
+            epochs = [row['epoch'] for row in history]
+            axes[0].plot(epochs, [row['validation_f1'] * 100 for row in history], label=f'Trial {index}')
+            axes[1].plot(epochs, [row['training_loss'] for row in history], label=f'Trial {index}')
+        axes[0].set(xlabel='Epoch', ylabel='Validation micro F1 (%)')
+        axes[1].set(xlabel='Epoch', ylabel='Training loss')
+        for ax in axes:
+            ax.legend()
+            ax.grid(alpha=0.2)
+        fig.tight_layout()
+        fig.savefig(folder / 'learning_curves.png', dpi=160)
+        plt.close(fig)
+    folder = output_dir / '5.2.3 Seeds and final results'
+    test_by_seed = {test['seed']: test['metrics'] for test in tests}
+    rows, per_type = [], []
+    for trial in trials:
+        seed = trial['config']['seed']
+        splits = [('Validation', trial['validation'])]
+        if seed in test_by_seed:
+            splits.append(('Test', test_by_seed[seed]))
+        for split, metrics in splits:
+            rows.append({'Split': split, 'Seed': seed,
+                         **{name: round(metrics['typed_exact'][key] * 100, 2) for name, key in
+                            [('Precision %', 'precision'), ('Recall %', 'recall'), ('Micro F1 %', 'f1')]},
+                         'Macro F1 %': round(metrics['typed_macro']['f1'] * 100, 2),
+                         'Train s': round(trial['training_seconds'], 1)})
+            for kind, values in metrics['per_type'].items():
+                per_type.append({'Split': split, 'Seed': seed, 'Type': kind, **values})
+    for split in ('Validation', 'Test'):
+        stats = summary[split.lower()]
+        if stats:
+            rows.append({'Split': split, 'Seed': 'Mean ± SD',
+                         **{name: f"{stats[key]['mean'] * 100:.2f} ± {stats[key]['std'] * 100:.2f}" for name, key in
+                            [('Precision %', 'precision'), ('Recall %', 'recall'), ('Micro F1 %', 'f1'), ('Macro F1 %', 'macro_f1')]},
+                         'Train s': f"{summary['training_seconds']['mean']:.1f} ± {summary['training_seconds']['std']:.1f}"})
+    table(pd.DataFrame(rows), folder, 'final_results', 'E2 final results')
+    pd.DataFrame(per_type).to_csv(folder / 'per_type_results.csv', index=False)
+    settings = {key: trials[0]['config'][key] for key in
+                ('encoder_learning_rate', 'head_learning_rate', 'batch_size', 'dropout', 'weight_decay', 'loss', 'scheduler', 'epochs', 'patience')}
+    table(pd.DataFrame(settings.items(), columns=['Setting', 'Selected value']), folder,
+          'selected_configuration', 'E2 selected configuration')
 
 
-def main():
-    import argparse
-    import math
-    from datetime import datetime, timezone
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--data-dir', type=Path, default=Path(__file__).resolve().parent / 'Dataset/TokenizedData/BioBERT')
-    parser.add_argument('--gold-dir', type=Path, default=Path(__file__).resolve().parent / 'Dataset/ProcessedData')
-    parser.add_argument('--output-dir', type=Path, default=None)
-    parser.add_argument('--model', default='dmis-lab/biobert-base-cased-v1.1')
-    parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--evaluate-checkpoint', type=Path, help='Evaluate a frozen selected checkpoint without training; requires --test')
-    parser.add_argument('--batch-size', type=int, default=8)
-    parser.add_argument('--encoder-learning-rate', type=float, default=None, help='Run only this encoder LR instead of the default three-LR search')
-    parser.add_argument('--head-learning-rate', type=float, default=1e-4)
-    parser.add_argument('--weight-decay', type=float, default=0.01)
-    parser.add_argument('--patience', type=int, default=3)
-    parser.add_argument('--max-length', type=int, default=512)
-    parser.add_argument('--stride', type=int, default=64)
-    parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--limit-docs', type=int, help='Smoke test only; not a formal experiment')
-    parser.add_argument('--test', action='store_true', help='Evaluate Test after selecting the checkpoint on Validation')
-    parser.add_argument('--encoder-learning-rates', type=float, nargs='+', default=[1e-5, 2e-5, 3e-5], help='Encoder LR candidates for the default search')
-    parser.add_argument('--validation-only', action='store_true', help='Search without final Test evaluation')
-    args = parser.parse_args()
-    if args.evaluate_checkpoint and not args.test:
-        parser.error('--evaluate-checkpoint requires --test')
-    if args.validation_only and (args.test or args.evaluate_checkpoint):
-        parser.error('--validation-only cannot be combined with Test evaluation')
-    if min(args.epochs, args.batch_size, args.patience) < 1 or (args.limit_docs is not None and args.limit_docs < 1):
-        parser.error('epochs, batch-size, patience and limit-docs must be positive')
-    rates = [args.head_learning_rate, *args.encoder_learning_rates]
-    if args.encoder_learning_rate is not None:
-        rates.append(args.encoder_learning_rate)
-    if any(not math.isfinite(rate) or rate <= 0 for rate in rates):
-        parser.error('learning rates must be finite and positive')
-    if len(set(args.encoder_learning_rates)) != len(args.encoder_learning_rates):
-        parser.error('encoder-learning-rates must not contain duplicates')
-    if not 0 <= args.stride < args.max_length - 2 or args.max_length > 512:
-        parser.error('Use max-length <= 512 and 0 <= stride < max-length - 2')
-    if args.output_dir is None:
-        run_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S_%fZ')
-        args.output_dir = Path(__file__).resolve().parent / 'results/completed/E2_partial_sweep' / run_id
-    print(f'Output directory: {args.output_dir.resolve()}', flush=True)
-    if args.encoder_learning_rate is not None or args.evaluate_checkpoint:
-        if args.encoder_learning_rate is None:
-            args.encoder_learning_rate = 2e-5  # No optimization occurs in evaluation-only mode.
-        keep = args.limit_docs is None and args.test and args.evaluate_checkpoint is None
-        with result_directory(args.output_dir, keep=keep):
-            run_trial(args, reserved=True)
-        print(f'E2 complete | Results: {args.output_dir.resolve()}' if keep else
-              'E2 complete | Temporary results discarded', flush=True)
+# Search on validation before locking settings for independent seeds
+def run_experiment(config=None, trial_runner=None, prepare_data=None, test_runner=None, render=True):
+    configure_output()
+    config = inherit_e1_config(config or E2Config())
+    if min(config.epochs, config.batch_size, config.micro_batch_size, config.cuda_evaluation_batch_size, config.patience) < 1:
+        raise ValueError('Epochs batch sizes and patience must be positive')
+    if config.limit_docs is not None and (config.limit_docs < 1 or config.evaluate_test):
+        raise ValueError('Smoke runs require a positive document limit and no test evaluation')
+    if config.seed != 9444:
+        raise ValueError('Learning rate searches must use seed 9444')
+    if config.loss not in {'cross_entropy', 'weighted_cross_entropy'}:
+        raise ValueError('Unsupported inherited loss')
+    if config.scheduler not in {'constant', 'linear', 'linear_warmup'}:
+        raise ValueError('Unsupported inherited scheduler')
+    output_dir = config.root / config.output_dir
+    keep = config.limit_docs is None and config.evaluate_test
+    with result_directory(output_dir, keep=keep):
+        result = _run_experiment(config, output_dir, trial_runner or run_trial, prepare_data,
+                                 test_runner or evaluate_final_trial, render)
+    print(f'E2 complete | Results: {output_dir.resolve()}' if keep else 'E2 smoke check complete | Temporary results discarded', flush=True)
+    return result
+
+
+# Keep test loading after all searches and seed checkpoint selection
+def _run_experiment(config, output_dir, trial_runner, prepare_data, test_runner, render):
+    print(f'E2 output: {output_dir.resolve()}\nE1 settings: {config.e1_config_path}', flush=True)
+    print(f'Fixed batch={config.batch_size} | dropout={config.dropout:g} | WD={config.weight_decay:g} | '
+          f'loss={config.loss} | scheduler={config.scheduler} | patience={config.patience}', flush=True)
+    save_json(output_dir / 'protocol.json', {
+        'baseline': asdict(config), 'e1_config_sha256': hashlib.sha256(config.e1_config_path.read_bytes()).hexdigest(),
+        'encoder_learning_rates': [1e-5, 2e-5, 3e-5], 'head_learning_rates': [5e-5, 1e-4, 2e-4],
+        'search_seed': 9444, 'final_seeds': [42, 9444, 2026], 'smoke_only': config.limit_docs is not None,
+        'selection': 'maximum validation typed exact span micro F1 with first candidate for ties',
+        'test_policy': 'evaluate all three seed checkpoints only after validation selection',
+        'optimizer_steps': 'one update per logical batch with token normalized micro batch gradients'})
+    if prepare_data is None:
+        from transformers import AutoTokenizer
+        print('Loading and validating training and validation data', flush=True)
+        tokenizer = AutoTokenizer.from_pretrained('google-bert/bert-base-cased', use_fast=True)
+        train_records, train_windows = load_e1_split(config, tokenizer, 'training')
+        valid_records, valid_windows = load_e1_split(config, tokenizer, 'validation')
+        data = tokenizer, train_records, train_windows, valid_records, valid_windows
     else:
-        run_sweep(args)
+        data = prepare_data(config)
+    stages = {}
+
+    def search(name, candidates):
+        print(f'\nStage: {name} | {len(candidates)} trials', flush=True)
+        trials = [trial_runner(candidate, output_dir / name / f'trial_{index:02d}', data)
+                  for index, candidate in enumerate(candidates, 1)]
+        stages[name] = trials
+        selected = best_trial(trials)
+        save_json(output_dir / name / 'selection.json', {'selected': selected, 'candidates': trials})
+        print(f'Stage complete | best Val F1={selected["validation_f1"]:.2%}', flush=True)
+        return replace(config, encoder_learning_rate=selected['config']['encoder_learning_rate'],
+                       head_learning_rate=selected['config']['head_learning_rate'])
+
+    selected = search('5.2.1 Encoder learning rate', [replace(config, encoder_learning_rate=rate) for rate in [1e-5, 2e-5, 3e-5]])
+    selected = search('5.2.2 Head learning rate', [replace(selected, head_learning_rate=rate) for rate in [5e-5, 1e-4, 2e-4]])
+    save_json(output_dir / 'selected_config.json', asdict(selected))
+    folder = output_dir / '5.2.3 Seeds and final results'
+    print('\nStage: 5.2.3 Seeds and final results | seeds=42, 9444, 2026', flush=True)
+    trials = [trial_runner(replace(selected, seed=seed), folder / f'seed_{seed}', data) for seed in [42, 9444, 2026]]
+    save_json(folder / 'validation_selection.json', trials)
+    tests = []
+    if config.evaluate_test:
+        test_data = load_e1_split(config, data[0], 'testing')
+        for trial in trials:
+            tests.append(test_runner(replace(selected, seed=trial['config']['seed']), trial, data[0], test_data))
+    summary = summarize_seeds(trials, tests)
+    save_json(folder / 'summary.json', summary)
+    if render:
+        print('Generating comparison tables and figures', flush=True)
+        render_results(output_dir, stages, trials, tests, summary)
+    return {'selected_config': asdict(selected), 'stages': stages, 'trials': trials, 'tests': tests, 'summary': summary}
 
 
+# Execute directly without command line arguments
 if __name__ == '__main__':
-    main()
+    run_experiment(E2Config())
