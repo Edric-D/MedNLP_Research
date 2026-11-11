@@ -1,0 +1,10 @@
+Setting,Selected value
+encoder_learning_rate,3e-05
+head_learning_rate,5e-05
+batch_size,8
+dropout,0.1
+weight_decay,0.01
+loss,cross_entropy
+scheduler,constant
+epochs,30
+patience,3

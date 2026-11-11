@@ -20,7 +20,9 @@ htmlcov/
 
 # Training outputs, downloaded models, and caches
 /baseline_results/
-/results/
+/results/*
+!/results/completed/
+.discarded-run-*/
 /outputs/
 /checkpoints/
 /models/
@@ -29,6 +31,7 @@ htmlcov/
 /wandb/
 .cache/
 checkpoint-*/
+best_checkpoint/
 *.pt
 *.pth
 *.ckpt
@@ -46,3 +49,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Files extracted from the local WSL transfer package
+/TRANSFER_README.md
+/environment-source.txt
+/requirements-transfer.txt
+/setup-wsl.sh
+/verify_gpu.py

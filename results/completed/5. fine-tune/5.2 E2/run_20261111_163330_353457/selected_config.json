@@ -1,0 +1,23 @@
+{
+  "root": "/home/administrator/MedNLP_Research",
+  "output_dir": "results/completed/5. fine-tune/5.2 E2/run_20261111_163330_353457",
+  "e1_config_path": "/home/administrator/MedNLP_Research/results/completed/5. fine-tune/5.1 E1/run_20261111_162541_367808/selected_config.json",
+  "model": "dmis-lab/biobert-base-cased-v1.1",
+  "epochs": 30,
+  "batch_size": 8,
+  "weight_decay": 0.01,
+  "scheduler": "constant",
+  "patience": 3,
+  "loss": "cross_entropy",
+  "seed": 9444,
+  "dropout": 0.1,
+  "encoder_learning_rate": 3e-05,
+  "head_learning_rate": 5e-05,
+  "max_length": 512,
+  "stride": 64,
+  "micro_batch_size": 8,
+  "cuda_fast_mode": true,
+  "cuda_evaluation_batch_size": 32,
+  "limit_docs": null,
+  "evaluate_test": true
+}

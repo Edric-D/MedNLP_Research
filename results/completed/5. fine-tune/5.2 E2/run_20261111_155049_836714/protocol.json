@@ -1,0 +1,46 @@
+{
+  "baseline": {
+    "root": "/home/administrator/MedNLP_Research",
+    "output_dir": "results/completed/5. fine-tune/5.2 E2/run_20261111_155049_836714",
+    "e1_config_path": "/home/administrator/MedNLP_Research/results/completed/5. fine-tune/5.1 E1/run_20261111_151736_154515/selected_config.json",
+    "model": "dmis-lab/biobert-base-cased-v1.1",
+    "epochs": 30,
+    "batch_size": 8,
+    "weight_decay": 0.01,
+    "scheduler": "constant",
+    "patience": 3,
+    "loss": "cross_entropy",
+    "seed": 9444,
+    "dropout": 0.1,
+    "encoder_learning_rate": 1e-05,
+    "head_learning_rate": 0.00075,
+    "max_length": 512,
+    "stride": 64,
+    "micro_batch_size": 8,
+    "cuda_fast_mode": true,
+    "cuda_evaluation_batch_size": 32,
+    "limit_docs": null,
+    "evaluate_test": true
+  },
+  "e1_config_sha256": "cd2970043c7cbf82f14d3ecbe6e6d162e04a8896d5fd0f4ec9e3477bc382b50f",
+  "encoder_learning_rates": [
+    1e-05,
+    2e-05,
+    3e-05
+  ],
+  "head_learning_rates": [
+    5e-05,
+    0.0001,
+    0.0002
+  ],
+  "search_seed": 9444,
+  "final_seeds": [
+    42,
+    9444,
+    2026
+  ],
+  "smoke_only": false,
+  "selection": "maximum validation typed exact span micro F1 with first candidate for ties",
+  "test_policy": "evaluate all three seed checkpoints only after validation selection",
+  "optimizer_steps": "one update per logical batch with token normalized micro batch gradients"
+}
