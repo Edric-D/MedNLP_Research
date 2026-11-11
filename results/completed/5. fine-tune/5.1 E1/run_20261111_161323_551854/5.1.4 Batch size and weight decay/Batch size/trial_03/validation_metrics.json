@@ -1,0 +1,127 @@
+{
+  "averaging": "micro",
+  "document_count": 100,
+  "gold_entity_count": 787,
+  "predicted_entity_count": 1098,
+  "typed_exact": {
+    "true_positives": 329,
+    "false_positives": 769,
+    "false_negatives": 458,
+    "precision": 0.2996357012750455,
+    "recall": 0.41804320203303685,
+    "f1": 0.34907161803713527
+  },
+  "typed_macro": {
+    "precision": 0.20413021298040382,
+    "recall": 0.2759315909166195,
+    "f1": 0.23238693256162407
+  },
+  "per_type": {
+    "SpecificDisease": {
+      "true_positives": 242,
+      "false_positives": 430,
+      "false_negatives": 170,
+      "precision": 0.3601190476190476,
+      "recall": 0.587378640776699,
+      "f1": 0.4464944649446494,
+      "support": 412,
+      "predicted_count": 672
+    },
+    "DiseaseClass": {
+      "true_positives": 19,
+      "false_positives": 112,
+      "false_negatives": 107,
+      "precision": 0.1450381679389313,
+      "recall": 0.15079365079365079,
+      "f1": 0.14785992217898833,
+      "support": 126,
+      "predicted_count": 131
+    },
+    "CompositeMention": {
+      "true_positives": 2,
+      "false_positives": 53,
+      "false_negatives": 33,
+      "precision": 0.03636363636363636,
+      "recall": 0.05714285714285714,
+      "f1": 0.044444444444444446,
+      "support": 35,
+      "predicted_count": 55
+    },
+    "Modifier": {
+      "true_positives": 66,
+      "false_positives": 174,
+      "false_negatives": 148,
+      "precision": 0.275,
+      "recall": 0.308411214953271,
+      "f1": 0.2907488986784141,
+      "support": 214,
+      "predicted_count": 240
+    }
+  },
+  "span_only_exact": {
+    "true_positives": 349,
+    "false_positives": 749,
+    "false_negatives": 438,
+    "precision": 0.31785063752276865,
+    "recall": 0.4434561626429479,
+    "f1": 0.3702917771883289
+  },
+  "exact_span_type": {
+    "matched_span_count": 349,
+    "correct_type_count": 329,
+    "wrong_type_count": 20,
+    "accuracy": 0.9426934097421203
+  },
+  "type_confusion_matrix": {
+    "SpecificDisease": {
+      "SpecificDisease": 242,
+      "DiseaseClass": 1,
+      "CompositeMention": 0,
+      "Modifier": 2
+    },
+    "DiseaseClass": {
+      "SpecificDisease": 10,
+      "DiseaseClass": 19,
+      "CompositeMention": 0,
+      "Modifier": 0
+    },
+    "CompositeMention": {
+      "SpecificDisease": 0,
+      "DiseaseClass": 0,
+      "CompositeMention": 2,
+      "Modifier": 0
+    },
+    "Modifier": {
+      "SpecificDisease": 4,
+      "DiseaseClass": 3,
+      "CompositeMention": 0,
+      "Modifier": 66
+    }
+  },
+  "start_boundary": {
+    "true_positives": 561,
+    "false_positives": 537,
+    "false_negatives": 226,
+    "precision": 0.5109289617486339,
+    "recall": 0.7128335451080051,
+    "f1": 0.5952254641909813
+  },
+  "end_boundary": {
+    "true_positives": 589,
+    "false_positives": 509,
+    "false_negatives": 198,
+    "precision": 0.5364298724954463,
+    "recall": 0.7484116899618806,
+    "f1": 0.6249336870026525
+  },
+  "character_overlap": {
+    "true_positives": 9331,
+    "false_positives": 494,
+    "false_negatives": 3059,
+    "precision": 0.9497201017811705,
+    "recall": 0.7531073446327684,
+    "f1": 0.8400630204816566
+  },
+  "illegal_bio_transitions": 473,
+  "window_overlap_token_conflicts": 9
+}
