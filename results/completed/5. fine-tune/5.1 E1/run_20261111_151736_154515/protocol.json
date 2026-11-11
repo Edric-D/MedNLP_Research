@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "root": "/home/administrator/MedNLP_Research",
+    "output_dir": "results/completed/5. fine-tune/5.1 E1/run_20261111_151736_154515",
+    "model": "dmis-lab/biobert-base-cased-v1.1",
+    "epochs": 30,
+    "batch_size": 8,
+    "weight_decay": 0.01,
+    "scheduler": "constant",
+    "patience": 3,
+    "loss": "cross_entropy",
+    "seed": 9444,
+    "learning_rate": 0.0005,
+    "dropout": 0.1,
+    "max_length": 512,
+    "stride": 64,
+    "run_stage4": true,
+    "batch_improvement_threshold": 0.0,
+    "limit_docs": null,
+    "evaluate_test": true,
+    "encoder_batch_size": 8,
+    "resume": false
+  },
+  "learning_rates": [
+    0.0005,
+    0.00075,
+    0.001,
+    0.0015,
+    0.002
+  ],
+  "dropouts": [
+    0.0,
+    0.1,
+    0.2
+  ],
+  "seeds": [
+    42,
+    9444,
+    2026
+  ],
+  "batch_gate": "strictly greater validation F1 than batch size 8",
+  "tie_break": "first candidate with equal F1",
+  "weighted_loss": "inverse supervised training token frequency with absent classes weighted zero",
+  "scheduler_budget": "full epoch budget with ceil 10 percent warmup steps",
+  "test_policy": "all three validation selected seed checkpoints after config lock",
+  "smoke_only": false
+}

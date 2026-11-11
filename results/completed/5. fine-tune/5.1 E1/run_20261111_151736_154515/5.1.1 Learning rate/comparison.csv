@@ -1,0 +1,6 @@
+LR,Dropout,Loss,Scheduler,Batch,WD,Best epoch,Val F1 %,Train s,Val s
+0.0005,0.1,cross_entropy,constant,8,0.01,28,39.87,61.3,8.6
+0.00075,0.1,cross_entropy,constant,8,0.01,28,41.79,46.5,8.6
+0.001,0.1,cross_entropy,constant,8,0.01,16,39.98,29.4,5.4
+0.0015,0.1,cross_entropy,constant,8,0.01,16,41.79,29.4,5.4
+0.002,0.1,cross_entropy,constant,8,0.01,16,41.42,29.5,5.4

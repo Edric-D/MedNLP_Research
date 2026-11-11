@@ -1,0 +1,25 @@
+Split,Seed,Type,Precision %,Recall %,F1 %,Support
+Validation,42,SpecificDisease,39.78,61.89,48.43,412
+Validation,42,DiseaseClass,22.42,29.37,25.43,126
+Validation,42,CompositeMention,8.16,11.43,9.52,35
+Validation,42,Modifier,33.33,44.86,38.25,214
+Test,42,SpecificDisease,41.36,63.78,50.18,555
+Test,42,DiseaseClass,13.65,28.1,18.38,121
+Test,42,CompositeMention,0.0,0.0,0.0,20
+Test,42,Modifier,40.18,50.38,44.71,264
+Validation,9444,SpecificDisease,40.61,61.89,49.04,412
+Validation,9444,DiseaseClass,21.33,25.4,23.19,126
+Validation,9444,CompositeMention,14.55,22.86,17.78,35
+Validation,9444,Modifier,35.45,49.53,41.33,214
+Test,9444,SpecificDisease,42.52,64.5,51.25,555
+Test,9444,DiseaseClass,14.15,24.79,18.02,121
+Test,9444,CompositeMention,4.35,10.0,6.06,20
+Test,9444,Modifier,40.91,54.55,46.75,264
+Validation,2026,SpecificDisease,40.72,63.35,49.57,412
+Validation,2026,DiseaseClass,19.73,23.02,21.25,126
+Validation,2026,CompositeMention,12.28,20.0,15.22,35
+Validation,2026,Modifier,33.89,47.66,39.61,214
+Test,2026,SpecificDisease,42.19,65.23,51.24,555
+Test,2026,DiseaseClass,16.13,24.79,19.54,121
+Test,2026,CompositeMention,0.0,0.0,0.0,20
+Test,2026,Modifier,40.52,52.65,45.8,264
