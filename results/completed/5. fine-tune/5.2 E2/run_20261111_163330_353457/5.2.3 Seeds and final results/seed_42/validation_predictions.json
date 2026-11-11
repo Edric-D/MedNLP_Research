@@ -1,0 +1,5046 @@
+[
+  {
+    "record_id": "NCBI_validation-0000",
+    "pmid": "8808605",
+    "entities": [
+      {
+        "start": 154,
+        "end": 171,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 361,
+        "end": 427,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 572,
+        "end": 611,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 677,
+        "end": 692,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1368,
+        "end": 1383,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0001",
+    "pmid": "9050866",
+    "entities": [
+      {
+        "start": 4,
+        "end": 25,
+        "type": "Modifier"
+      },
+      {
+        "start": 152,
+        "end": 173,
+        "type": "Modifier"
+      },
+      {
+        "start": 686,
+        "end": 707,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0002",
+    "pmid": "9012409",
+    "entities": [
+      {
+        "start": 20,
+        "end": 22,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 31,
+        "end": 42,
+        "type": "Modifier"
+      },
+      {
+        "start": 43,
+        "end": 54,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 54,
+        "end": 60,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 60,
+        "end": 63,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 112,
+        "end": 118,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 137,
+        "end": 149,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1737,
+        "end": 1749,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0003",
+    "pmid": "8755645",
+    "entities": [
+      {
+        "start": 78,
+        "end": 87,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 94,
+        "end": 102,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 104,
+        "end": 120,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 453,
+        "end": 469,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 471,
+        "end": 474,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 737,
+        "end": 740,
+        "type": "Modifier"
+      },
+      {
+        "start": 1168,
+        "end": 1171,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0004",
+    "pmid": "8751855",
+    "entities": [
+      {
+        "start": 25,
+        "end": 49,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 98,
+        "end": 103,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 107,
+        "end": 120,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 259,
+        "end": 283,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 401,
+        "end": 425,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 484,
+        "end": 509,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 586,
+        "end": 621,
+        "type": "Modifier"
+      },
+      {
+        "start": 688,
+        "end": 701,
+        "type": "Modifier"
+      },
+      {
+        "start": 786,
+        "end": 810,
+        "type": "Modifier"
+      },
+      {
+        "start": 972,
+        "end": 989,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1410,
+        "end": 1434,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1568,
+        "end": 1592,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0005",
+    "pmid": "8674108",
+    "entities": [
+      {
+        "start": 4,
+        "end": 9,
+        "type": "Modifier"
+      },
+      {
+        "start": 171,
+        "end": 197,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 264,
+        "end": 270,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0006",
+    "pmid": "9223312",
+    "entities": [
+      {
+        "start": 116,
+        "end": 141,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 184,
+        "end": 187,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 195,
+        "end": 197,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 202,
+        "end": 214,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 344,
+        "end": 349,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 350,
+        "end": 355,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 356,
+        "end": 381,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1026,
+        "end": 1051,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0007",
+    "pmid": "8917548",
+    "entities": [
+      {
+        "start": 23,
+        "end": 44,
+        "type": "Modifier"
+      },
+      {
+        "start": 105,
+        "end": 126,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 351,
+        "end": 359,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 638,
+        "end": 659,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0008",
+    "pmid": "8825599",
+    "entities": [
+      {
+        "start": 21,
+        "end": 65,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 110,
+        "end": 125,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0009",
+    "pmid": "9072974",
+    "entities": [
+      {
+        "start": 68,
+        "end": 102,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 202,
+        "end": 207,
+        "type": "Modifier"
+      },
+      {
+        "start": 293,
+        "end": 300,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 376,
+        "end": 388,
+        "type": "Modifier"
+      },
+      {
+        "start": 430,
+        "end": 445,
+        "type": "Modifier"
+      },
+      {
+        "start": 471,
+        "end": 484,
+        "type": "Modifier"
+      },
+      {
+        "start": 538,
+        "end": 551,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 770,
+        "end": 775,
+        "type": "Modifier"
+      },
+      {
+        "start": 846,
+        "end": 851,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0010",
+    "pmid": "8898652",
+    "entities": [
+      {
+        "start": 46,
+        "end": 64,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 164,
+        "end": 182,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 250,
+        "end": 255,
+        "type": "Modifier"
+      },
+      {
+        "start": 340,
+        "end": 345,
+        "type": "Modifier"
+      },
+      {
+        "start": 382,
+        "end": 400,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 479,
+        "end": 497,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 603,
+        "end": 620,
+        "type": "Modifier"
+      },
+      {
+        "start": 908,
+        "end": 914,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 914,
+        "end": 915,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 980,
+        "end": 985,
+        "type": "Modifier"
+      },
+      {
+        "start": 1019,
+        "end": 1037,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1098,
+        "end": 1116,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1194,
+        "end": 1199,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0011",
+    "pmid": "8938427",
+    "entities": [
+      {
+        "start": 164,
+        "end": 185,
+        "type": "Modifier"
+      },
+      {
+        "start": 254,
+        "end": 260,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 428,
+        "end": 434,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0012",
+    "pmid": "8621452",
+    "entities": [
+      {
+        "start": 0,
+        "end": 38,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 143,
+        "end": 183,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 376,
+        "end": 396,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 434,
+        "end": 452,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 656,
+        "end": 677,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0013",
+    "pmid": "8843194",
+    "entities": [
+      {
+        "start": 36,
+        "end": 54,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 98,
+        "end": 112,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 118,
+        "end": 133,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 180,
+        "end": 187,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 188,
+        "end": 209,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 568,
+        "end": 589,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 639,
+        "end": 654,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 660,
+        "end": 665,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 665,
+        "end": 669,
+        "type": "Modifier"
+      },
+      {
+        "start": 675,
+        "end": 677,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 677,
+        "end": 686,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 715,
+        "end": 722,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 884,
+        "end": 885,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 891,
+        "end": 898,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1207,
+        "end": 1231,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1277,
+        "end": 1293,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1523,
+        "end": 1528,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0014",
+    "pmid": "8700509",
+    "entities": [
+      {
+        "start": 155,
+        "end": 176,
+        "type": "Modifier"
+      },
+      {
+        "start": 234,
+        "end": 248,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0015",
+    "pmid": "9241281",
+    "entities": [
+      {
+        "start": 54,
+        "end": 59,
+        "type": "Modifier"
+      },
+      {
+        "start": 65,
+        "end": 67,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 161,
+        "end": 167,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 179,
+        "end": 187,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 188,
+        "end": 209,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 214,
+        "end": 234,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 507,
+        "end": 522,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 522,
+        "end": 523,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 848,
+        "end": 854,
+        "type": "Modifier"
+      },
+      {
+        "start": 969,
+        "end": 974,
+        "type": "Modifier"
+      },
+      {
+        "start": 1529,
+        "end": 1536,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0016",
+    "pmid": "9218625",
+    "entities": [
+      {
+        "start": 19,
+        "end": 32,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 82,
+        "end": 95,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 645,
+        "end": 657,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0017",
+    "pmid": "8931701",
+    "entities": [
+      {
+        "start": 111,
+        "end": 135,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 141,
+        "end": 165,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 167,
+        "end": 170,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 176,
+        "end": 209,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 268,
+        "end": 271,
+        "type": "Modifier"
+      },
+      {
+        "start": 443,
+        "end": 446,
+        "type": "Modifier"
+      },
+      {
+        "start": 608,
+        "end": 611,
+        "type": "Modifier"
+      },
+      {
+        "start": 662,
+        "end": 665,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1251,
+        "end": 1255,
+        "type": "Modifier"
+      },
+      {
+        "start": 1300,
+        "end": 1316,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1381,
+        "end": 1384,
+        "type": "Modifier"
+      },
+      {
+        "start": 1451,
+        "end": 1455,
+        "type": "Modifier"
+      },
+      {
+        "start": 1456,
+        "end": 1468,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1672,
+        "end": 1675,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0018",
+    "pmid": "8661102",
+    "entities": [
+      {
+        "start": 77,
+        "end": 98,
+        "type": "Modifier"
+      },
+      {
+        "start": 163,
+        "end": 184,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 186,
+        "end": 189,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0019",
+    "pmid": "8782829",
+    "entities": [
+      {
+        "start": 20,
+        "end": 38,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 111,
+        "end": 118,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 287,
+        "end": 328,
+        "type": "Modifier"
+      },
+      {
+        "start": 330,
+        "end": 335,
+        "type": "Modifier"
+      },
+      {
+        "start": 352,
+        "end": 368,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 639,
+        "end": 661,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 857,
+        "end": 878,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 889,
+        "end": 910,
+        "type": "Modifier"
+      },
+      {
+        "start": 1601,
+        "end": 1608,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0020",
+    "pmid": "9066888",
+    "entities": [
+      {
+        "start": 0,
+        "end": 16,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 68,
+        "end": 84,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 97,
+        "end": 113,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 297,
+        "end": 308,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 314,
+        "end": 327,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 329,
+        "end": 354,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 360,
+        "end": 369,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 661,
+        "end": 677,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0021",
+    "pmid": "8841191",
+    "entities": [
+      {
+        "start": 136,
+        "end": 159,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 232,
+        "end": 245,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 318,
+        "end": 340,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 352,
+        "end": 361,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 362,
+        "end": 383,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 451,
+        "end": 474,
+        "type": "Modifier"
+      },
+      {
+        "start": 971,
+        "end": 984,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1040,
+        "end": 1053,
+        "type": "Modifier"
+      },
+      {
+        "start": 1237,
+        "end": 1250,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1734,
+        "end": 1758,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0022",
+    "pmid": "8678979",
+    "entities": [
+      {
+        "start": 117,
+        "end": 131,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0023",
+    "pmid": "9182899",
+    "entities": [
+      {
+        "start": 37,
+        "end": 50,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 101,
+        "end": 113,
+        "type": "Modifier"
+      },
+      {
+        "start": 688,
+        "end": 701,
+        "type": "Modifier"
+      },
+      {
+        "start": 968,
+        "end": 984,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1011,
+        "end": 1012,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1039,
+        "end": 1041,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1064,
+        "end": 1077,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0024",
+    "pmid": "9020847",
+    "entities": [
+      {
+        "start": 90,
+        "end": 108,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 110,
+        "end": 112,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 223,
+        "end": 225,
+        "type": "Modifier"
+      },
+      {
+        "start": 728,
+        "end": 730,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0025",
+    "pmid": "9174057",
+    "entities": [
+      {
+        "start": 53,
+        "end": 70,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 252,
+        "end": 264,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 282,
+        "end": 299,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 423,
+        "end": 428,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 547,
+        "end": 564,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 624,
+        "end": 641,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 667,
+        "end": 673,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 786,
+        "end": 803,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 861,
+        "end": 878,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 902,
+        "end": 909,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0026",
+    "pmid": "9083764",
+    "entities": [
+      {
+        "start": 17,
+        "end": 59,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 65,
+        "end": 89,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 91,
+        "end": 94,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 96,
+        "end": 122,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 143,
+        "end": 174,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 186,
+        "end": 194,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 196,
+        "end": 209,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 215,
+        "end": 223,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 223,
+        "end": 224,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 224,
+        "end": 229,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 255,
+        "end": 258,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 560,
+        "end": 563,
+        "type": "Modifier"
+      },
+      {
+        "start": 724,
+        "end": 732,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 789,
+        "end": 803,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 809,
+        "end": 817,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 985,
+        "end": 988,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1046,
+        "end": 1052,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1052,
+        "end": 1060,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1215,
+        "end": 1219,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1220,
+        "end": 1223,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1223,
+        "end": 1229,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1241,
+        "end": 1257,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1319,
+        "end": 1327,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1327,
+        "end": 1333,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1345,
+        "end": 1357,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1416,
+        "end": 1419,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1495,
+        "end": 1498,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1651,
+        "end": 1654,
+        "type": "Modifier"
+      },
+      {
+        "start": 1706,
+        "end": 1709,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0027",
+    "pmid": "8636252",
+    "entities": [
+      {
+        "start": 0,
+        "end": 29,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 53,
+        "end": 63,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 64,
+        "end": 81,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 112,
+        "end": 141,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 143,
+        "end": 146,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 153,
+        "end": 168,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 185,
+        "end": 228,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 230,
+        "end": 236,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 236,
+        "end": 251,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 328,
+        "end": 331,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 474,
+        "end": 477,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 544,
+        "end": 565,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 567,
+        "end": 570,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 642,
+        "end": 663,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 665,
+        "end": 681,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 713,
+        "end": 716,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 720,
+        "end": 732,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 780,
+        "end": 783,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 817,
+        "end": 820,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 839,
+        "end": 855,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1067,
+        "end": 1106,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1367,
+        "end": 1379,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1389,
+        "end": 1410,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1462,
+        "end": 1465,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1504,
+        "end": 1507,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1531,
+        "end": 1558,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0028",
+    "pmid": "8640236",
+    "entities": [
+      {
+        "start": 36,
+        "end": 52,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 57,
+        "end": 62,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 63,
+        "end": 70,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 109,
+        "end": 115,
+        "type": "Modifier"
+      },
+      {
+        "start": 179,
+        "end": 185,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 248,
+        "end": 254,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 262,
+        "end": 268,
+        "type": "Modifier"
+      },
+      {
+        "start": 323,
+        "end": 331,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 332,
+        "end": 338,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 338,
+        "end": 339,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 456,
+        "end": 490,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 536,
+        "end": 571,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 665,
+        "end": 681,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 713,
+        "end": 735,
+        "type": "Modifier"
+      },
+      {
+        "start": 789,
+        "end": 802,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 879,
+        "end": 885,
+        "type": "Modifier"
+      },
+      {
+        "start": 971,
+        "end": 984,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 994,
+        "end": 1001,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1195,
+        "end": 1218,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1274,
+        "end": 1286,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1339,
+        "end": 1346,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1357,
+        "end": 1373,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1418,
+        "end": 1435,
+        "type": "Modifier"
+      },
+      {
+        "start": 1493,
+        "end": 1510,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0029",
+    "pmid": "9050868",
+    "entities": [
+      {
+        "start": 441,
+        "end": 471,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 494,
+        "end": 508,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 995,
+        "end": 1029,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1056,
+        "end": 1086,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0030",
+    "pmid": "9138149",
+    "entities": [
+      {
+        "start": 55,
+        "end": 63,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 121,
+        "end": 129,
+        "type": "Modifier"
+      },
+      {
+        "start": 277,
+        "end": 285,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 315,
+        "end": 324,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1101,
+        "end": 1119,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0031",
+    "pmid": "8931709",
+    "entities": [
+      {
+        "start": 37,
+        "end": 40,
+        "type": "Modifier"
+      },
+      {
+        "start": 109,
+        "end": 146,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 148,
+        "end": 178,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 180,
+        "end": 183,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 219,
+        "end": 236,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 282,
+        "end": 300,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 322,
+        "end": 327,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 367,
+        "end": 393,
+        "type": "Modifier"
+      },
+      {
+        "start": 395,
+        "end": 398,
+        "type": "Modifier"
+      },
+      {
+        "start": 439,
+        "end": 442,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 552,
+        "end": 589,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 591,
+        "end": 595,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 725,
+        "end": 729,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1007,
+        "end": 1010,
+        "type": "Modifier"
+      },
+      {
+        "start": 1225,
+        "end": 1229,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0032",
+    "pmid": "8824873",
+    "entities": [
+      {
+        "start": 119,
+        "end": 137,
+        "type": "Modifier"
+      },
+      {
+        "start": 174,
+        "end": 192,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 194,
+        "end": 196,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 240,
+        "end": 242,
+        "type": "Modifier"
+      },
+      {
+        "start": 322,
+        "end": 324,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 392,
+        "end": 394,
+        "type": "Modifier"
+      },
+      {
+        "start": 470,
+        "end": 475,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 641,
+        "end": 643,
+        "type": "Modifier"
+      },
+      {
+        "start": 883,
+        "end": 885,
+        "type": "Modifier"
+      },
+      {
+        "start": 940,
+        "end": 942,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1163,
+        "end": 1165,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0033",
+    "pmid": "8944024",
+    "entities": [
+      {
+        "start": 509,
+        "end": 545,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0034",
+    "pmid": "8670333",
+    "entities": [
+      {
+        "start": 43,
+        "end": 71,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 233,
+        "end": 261,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 263,
+        "end": 266,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 499,
+        "end": 502,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1257,
+        "end": 1260,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0035",
+    "pmid": "9144525",
+    "entities": [
+      {
+        "start": 337,
+        "end": 347,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 348,
+        "end": 350,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 421,
+        "end": 441,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 505,
+        "end": 518,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 553,
+        "end": 566,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 658,
+        "end": 671,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 989,
+        "end": 1002,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0036",
+    "pmid": "9222760",
+    "entities": [
+      {
+        "start": 27,
+        "end": 51,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 51,
+        "end": 57,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 57,
+        "end": 60,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 124,
+        "end": 146,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 530,
+        "end": 539,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 544,
+        "end": 554,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 554,
+        "end": 560,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 560,
+        "end": 563,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 616,
+        "end": 638,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 799,
+        "end": 821,
+        "type": "Modifier"
+      },
+      {
+        "start": 920,
+        "end": 932,
+        "type": "Modifier"
+      },
+      {
+        "start": 1132,
+        "end": 1144,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1204,
+        "end": 1216,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0037",
+    "pmid": "9056547",
+    "entities": [
+      {
+        "start": 102,
+        "end": 130,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 283,
+        "end": 311,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 313,
+        "end": 316,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 466,
+        "end": 493,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 495,
+        "end": 498,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 567,
+        "end": 570,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 647,
+        "end": 656,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 668,
+        "end": 675,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 691,
+        "end": 709,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 744,
+        "end": 752,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 756,
+        "end": 777,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0038",
+    "pmid": "8790412",
+    "entities": [
+      {
+        "start": 39,
+        "end": 64,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 100,
+        "end": 109,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 110,
+        "end": 135,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0039",
+    "pmid": "9090524",
+    "entities": [
+      {
+        "start": 132,
+        "end": 145,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 147,
+        "end": 159,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 161,
+        "end": 163,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 306,
+        "end": 319,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 378,
+        "end": 398,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 400,
+        "end": 417,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 419,
+        "end": 434,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 454,
+        "end": 456,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 555,
+        "end": 576,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 578,
+        "end": 582,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 584,
+        "end": 598,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 599,
+        "end": 611,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 613,
+        "end": 649,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 670,
+        "end": 692,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0040",
+    "pmid": "8843193",
+    "entities": [
+      {
+        "start": 104,
+        "end": 125,
+        "type": "Modifier"
+      },
+      {
+        "start": 127,
+        "end": 129,
+        "type": "Modifier"
+      },
+      {
+        "start": 343,
+        "end": 345,
+        "type": "Modifier"
+      },
+      {
+        "start": 382,
+        "end": 385,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1113,
+        "end": 1119,
+        "type": "Modifier"
+      },
+      {
+        "start": 1128,
+        "end": 1130,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0041",
+    "pmid": "8659549",
+    "entities": [
+      {
+        "start": 86,
+        "end": 101,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 103,
+        "end": 118,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 138,
+        "end": 163,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 186,
+        "end": 214,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 253,
+        "end": 268,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 583,
+        "end": 598,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1251,
+        "end": 1266,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1742,
+        "end": 1760,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1792,
+        "end": 1807,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0042",
+    "pmid": "9145677",
+    "entities": [
+      {
+        "start": 69,
+        "end": 82,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 196,
+        "end": 209,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 503,
+        "end": 516,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 708,
+        "end": 721,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 779,
+        "end": 792,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 801,
+        "end": 815,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 908,
+        "end": 914,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 915,
+        "end": 933,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1014,
+        "end": 1027,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1045,
+        "end": 1059,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1077,
+        "end": 1102,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1275,
+        "end": 1284,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1285,
+        "end": 1298,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1316,
+        "end": 1329,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1329,
+        "end": 1330,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1460,
+        "end": 1474,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1518,
+        "end": 1531,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0043",
+    "pmid": "9271438",
+    "entities": [
+      {
+        "start": 4,
+        "end": 27,
+        "type": "Modifier"
+      },
+      {
+        "start": 36,
+        "end": 38,
+        "type": "Modifier"
+      },
+      {
+        "start": 140,
+        "end": 163,
+        "type": "Modifier"
+      },
+      {
+        "start": 229,
+        "end": 260,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 262,
+        "end": 265,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 309,
+        "end": 334,
+        "type": "Modifier"
+      },
+      {
+        "start": 359,
+        "end": 363,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 393,
+        "end": 401,
+        "type": "Modifier"
+      },
+      {
+        "start": 458,
+        "end": 461,
+        "type": "Modifier"
+      },
+      {
+        "start": 461,
+        "end": 462,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 467,
+        "end": 503,
+        "type": "Modifier"
+      },
+      {
+        "start": 504,
+        "end": 510,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 557,
+        "end": 560,
+        "type": "Modifier"
+      },
+      {
+        "start": 756,
+        "end": 759,
+        "type": "Modifier"
+      },
+      {
+        "start": 1474,
+        "end": 1477,
+        "type": "Modifier"
+      },
+      {
+        "start": 1831,
+        "end": 1856,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1861,
+        "end": 1864,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0044",
+    "pmid": "8605116",
+    "entities": [
+      {
+        "start": 52,
+        "end": 77,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 164,
+        "end": 165,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 173,
+        "end": 197,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0045",
+    "pmid": "8723064",
+    "entities": [
+      {
+        "start": 69,
+        "end": 90,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 329,
+        "end": 350,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 352,
+        "end": 355,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 392,
+        "end": 395,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 673,
+        "end": 676,
+        "type": "Modifier"
+      },
+      {
+        "start": 742,
+        "end": 745,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0046",
+    "pmid": "8666397",
+    "entities": [
+      {
+        "start": 25,
+        "end": 49,
+        "type": "Modifier"
+      },
+      {
+        "start": 109,
+        "end": 111,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 206,
+        "end": 230,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 892,
+        "end": 898,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 902,
+        "end": 903,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 908,
+        "end": 917,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 924,
+        "end": 929,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 929,
+        "end": 932,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 932,
+        "end": 935,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 935,
+        "end": 947,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1012,
+        "end": 1036,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0047",
+    "pmid": "8789439",
+    "entities": [
+      {
+        "start": 20,
+        "end": 34,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 36,
+        "end": 38,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 69,
+        "end": 71,
+        "type": "Modifier"
+      },
+      {
+        "start": 159,
+        "end": 173,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 175,
+        "end": 177,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 231,
+        "end": 233,
+        "type": "Modifier"
+      },
+      {
+        "start": 275,
+        "end": 277,
+        "type": "Modifier"
+      },
+      {
+        "start": 585,
+        "end": 587,
+        "type": "Modifier"
+      },
+      {
+        "start": 982,
+        "end": 984,
+        "type": "Modifier"
+      },
+      {
+        "start": 1101,
+        "end": 1141,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0048",
+    "pmid": "8659522",
+    "entities": [
+      {
+        "start": 73,
+        "end": 91,
+        "type": "Modifier"
+      },
+      {
+        "start": 93,
+        "end": 95,
+        "type": "Modifier"
+      },
+      {
+        "start": 110,
+        "end": 112,
+        "type": "Modifier"
+      },
+      {
+        "start": 259,
+        "end": 277,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 279,
+        "end": 281,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 384,
+        "end": 386,
+        "type": "Modifier"
+      },
+      {
+        "start": 1283,
+        "end": 1285,
+        "type": "Modifier"
+      },
+      {
+        "start": 1421,
+        "end": 1423,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1749,
+        "end": 1751,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1855,
+        "end": 1857,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0049",
+    "pmid": "8894695",
+    "entities": [
+      {
+        "start": 45,
+        "end": 65,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 76,
+        "end": 141,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 167,
+        "end": 187,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 396,
+        "end": 416,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 563,
+        "end": 568,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 591,
+        "end": 606,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 921,
+        "end": 936,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 974,
+        "end": 975,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1165,
+        "end": 1170,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1191,
+        "end": 1211,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0050",
+    "pmid": "8673132",
+    "entities": [
+      {
+        "start": 17,
+        "end": 35,
+        "type": "Modifier"
+      },
+      {
+        "start": 84,
+        "end": 92,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 94,
+        "end": 112,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 114,
+        "end": 116,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 124,
+        "end": 151,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 296,
+        "end": 298,
+        "type": "Modifier"
+      },
+      {
+        "start": 407,
+        "end": 415,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 416,
+        "end": 418,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 418,
+        "end": 420,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 420,
+        "end": 424,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 469,
+        "end": 471,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 561,
+        "end": 569,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 862,
+        "end": 864,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0051",
+    "pmid": "8644703",
+    "entities": [
+      {
+        "start": 109,
+        "end": 132,
+        "type": "Modifier"
+      },
+      {
+        "start": 276,
+        "end": 304,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 734,
+        "end": 755,
+        "type": "Modifier"
+      },
+      {
+        "start": 845,
+        "end": 873,
+        "type": "CompositeMention"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0052",
+    "pmid": "8812423",
+    "entities": [
+      {
+        "start": 51,
+        "end": 58,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 142,
+        "end": 149,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 708,
+        "end": 714,
+        "type": "Modifier"
+      },
+      {
+        "start": 793,
+        "end": 799,
+        "type": "Modifier"
+      },
+      {
+        "start": 1835,
+        "end": 1841,
+        "type": "Modifier"
+      },
+      {
+        "start": 1865,
+        "end": 1872,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0053",
+    "pmid": "8833159",
+    "entities": [
+      {
+        "start": 259,
+        "end": 288,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 290,
+        "end": 340,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 349,
+        "end": 350,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 358,
+        "end": 361,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 461,
+        "end": 511,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1016,
+        "end": 1037,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0054",
+    "pmid": "8595416",
+    "entities": [
+      {
+        "start": 91,
+        "end": 109,
+        "type": "Modifier"
+      },
+      {
+        "start": 134,
+        "end": 152,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 154,
+        "end": 156,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 561,
+        "end": 563,
+        "type": "Modifier"
+      },
+      {
+        "start": 1234,
+        "end": 1236,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0055",
+    "pmid": "9028321",
+    "entities": [
+      {
+        "start": 48,
+        "end": 87,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 444,
+        "end": 483,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 485,
+        "end": 489,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 586,
+        "end": 590,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 785,
+        "end": 797,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 802,
+        "end": 817,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 849,
+        "end": 868,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0056",
+    "pmid": "9063749",
+    "entities": [
+      {
+        "start": 44,
+        "end": 69,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 140,
+        "end": 153,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 158,
+        "end": 172,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 380,
+        "end": 393,
+        "type": "Modifier"
+      },
+      {
+        "start": 431,
+        "end": 444,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 763,
+        "end": 788,
+        "type": "Modifier"
+      },
+      {
+        "start": 1270,
+        "end": 1294,
+        "type": "Modifier"
+      },
+      {
+        "start": 1396,
+        "end": 1409,
+        "type": "Modifier"
+      },
+      {
+        "start": 1559,
+        "end": 1572,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0057",
+    "pmid": "8758207",
+    "entities": [
+      {
+        "start": 16,
+        "end": 19,
+        "type": "Modifier"
+      },
+      {
+        "start": 75,
+        "end": 110,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 147,
+        "end": 150,
+        "type": "Modifier"
+      },
+      {
+        "start": 187,
+        "end": 208,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 223,
+        "end": 249,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 300,
+        "end": 301,
+        "type": "Modifier"
+      },
+      {
+        "start": 450,
+        "end": 485,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 508,
+        "end": 541,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 559,
+        "end": 594,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 713,
+        "end": 746,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 764,
+        "end": 792,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 801,
+        "end": 818,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 941,
+        "end": 942,
+        "type": "Modifier"
+      },
+      {
+        "start": 965,
+        "end": 972,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1051,
+        "end": 1052,
+        "type": "Modifier"
+      },
+      {
+        "start": 1110,
+        "end": 1145,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0058",
+    "pmid": "8786135",
+    "entities": [
+      {
+        "start": 34,
+        "end": 55,
+        "type": "Modifier"
+      },
+      {
+        "start": 132,
+        "end": 153,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0059",
+    "pmid": "8637912",
+    "entities": [
+      {
+        "start": 0,
+        "end": 2,
+        "type": "Modifier"
+      },
+      {
+        "start": 2,
+        "end": 5,
+        "type": "Modifier"
+      },
+      {
+        "start": 41,
+        "end": 44,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 44,
+        "end": 49,
+        "type": "Modifier"
+      },
+      {
+        "start": 50,
+        "end": 59,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 124,
+        "end": 139,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 171,
+        "end": 182,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 382,
+        "end": 400,
+        "type": "Modifier"
+      },
+      {
+        "start": 401,
+        "end": 420,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 498,
+        "end": 517,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 840,
+        "end": 843,
+        "type": "Modifier"
+      },
+      {
+        "start": 843,
+        "end": 844,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 990,
+        "end": 995,
+        "type": "Modifier"
+      },
+      {
+        "start": 1034,
+        "end": 1058,
+        "type": "Modifier"
+      },
+      {
+        "start": 1152,
+        "end": 1175,
+        "type": "Modifier"
+      },
+      {
+        "start": 1263,
+        "end": 1268,
+        "type": "Modifier"
+      },
+      {
+        "start": 1557,
+        "end": 1562,
+        "type": "Modifier"
+      },
+      {
+        "start": 1565,
+        "end": 1577,
+        "type": "Modifier"
+      },
+      {
+        "start": 1593,
+        "end": 1598,
+        "type": "Modifier"
+      },
+      {
+        "start": 1620,
+        "end": 1638,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1732,
+        "end": 1756,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0060",
+    "pmid": "8931695",
+    "entities": [
+      {
+        "start": 41,
+        "end": 64,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 69,
+        "end": 90,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 109,
+        "end": 130,
+        "type": "Modifier"
+      },
+      {
+        "start": 200,
+        "end": 217,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 267,
+        "end": 288,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 290,
+        "end": 293,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 296,
+        "end": 319,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 321,
+        "end": 324,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 331,
+        "end": 354,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 356,
+        "end": 361,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 407,
+        "end": 412,
+        "type": "Modifier"
+      },
+      {
+        "start": 413,
+        "end": 430,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 552,
+        "end": 555,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 601,
+        "end": 604,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 864,
+        "end": 867,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 876,
+        "end": 877,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 878,
+        "end": 879,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1283,
+        "end": 1286,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1661,
+        "end": 1664,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1668,
+        "end": 1671,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0061",
+    "pmid": "9069115",
+    "entities": [
+      {
+        "start": 69,
+        "end": 81,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1519,
+        "end": 1531,
+        "type": "Modifier"
+      },
+      {
+        "start": 1679,
+        "end": 1691,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0062",
+    "pmid": "8673131",
+    "entities": [
+      {
+        "start": 9,
+        "end": 27,
+        "type": "Modifier"
+      },
+      {
+        "start": 68,
+        "end": 76,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 86,
+        "end": 104,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 106,
+        "end": 108,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 180,
+        "end": 182,
+        "type": "Modifier"
+      },
+      {
+        "start": 619,
+        "end": 646,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 721,
+        "end": 723,
+        "type": "Modifier"
+      },
+      {
+        "start": 768,
+        "end": 775,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 777,
+        "end": 782,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 782,
+        "end": 785,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 787,
+        "end": 795,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 800,
+        "end": 816,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0063",
+    "pmid": "8871666",
+    "entities": [
+      {
+        "start": 19,
+        "end": 62,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 104,
+        "end": 126,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 128,
+        "end": 169,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 467,
+        "end": 476,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 965,
+        "end": 984,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1047,
+        "end": 1059,
+        "type": "Modifier"
+      },
+      {
+        "start": 1287,
+        "end": 1297,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0064",
+    "pmid": "9245987",
+    "entities": [
+      {
+        "start": 73,
+        "end": 87,
+        "type": "Modifier"
+      },
+      {
+        "start": 206,
+        "end": 220,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0065",
+    "pmid": "9019400",
+    "entities": [
+      {
+        "start": 11,
+        "end": 16,
+        "type": "Modifier"
+      },
+      {
+        "start": 92,
+        "end": 111,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 258,
+        "end": 275,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 438,
+        "end": 443,
+        "type": "Modifier"
+      },
+      {
+        "start": 497,
+        "end": 516,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 554,
+        "end": 571,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 749,
+        "end": 755,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 755,
+        "end": 756,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 828,
+        "end": 841,
+        "type": "Modifier"
+      },
+      {
+        "start": 912,
+        "end": 925,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0066",
+    "pmid": "8776595",
+    "entities": [
+      {
+        "start": 4,
+        "end": 37,
+        "type": "Modifier"
+      },
+      {
+        "start": 687,
+        "end": 720,
+        "type": "Modifier"
+      },
+      {
+        "start": 722,
+        "end": 726,
+        "type": "Modifier"
+      },
+      {
+        "start": 870,
+        "end": 874,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0067",
+    "pmid": "8689689",
+    "entities": [
+      {
+        "start": 75,
+        "end": 92,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 94,
+        "end": 102,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 114,
+        "end": 123,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 136,
+        "end": 140,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 149,
+        "end": 172,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 260,
+        "end": 275,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 298,
+        "end": 302,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 307,
+        "end": 315,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 334,
+        "end": 353,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 673,
+        "end": 686,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 695,
+        "end": 700,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0068",
+    "pmid": "8644702",
+    "entities": [
+      {
+        "start": 28,
+        "end": 64,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 133,
+        "end": 158,
+        "type": "Modifier"
+      },
+      {
+        "start": 1095,
+        "end": 1116,
+        "type": "Modifier"
+      },
+      {
+        "start": 1162,
+        "end": 1176,
+        "type": "Modifier"
+      },
+      {
+        "start": 1266,
+        "end": 1287,
+        "type": "Modifier"
+      },
+      {
+        "start": 1393,
+        "end": 1399,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1407,
+        "end": 1412,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1471,
+        "end": 1481,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1482,
+        "end": 1491,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1492,
+        "end": 1513,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1517,
+        "end": 1535,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1540,
+        "end": 1557,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1565,
+        "end": 1579,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1655,
+        "end": 1669,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1830,
+        "end": 1854,
+        "type": "Modifier"
+      },
+      {
+        "start": 1887,
+        "end": 1902,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0069",
+    "pmid": "8929264",
+    "entities": [
+      {
+        "start": 6,
+        "end": 7,
+        "type": "Modifier"
+      },
+      {
+        "start": 33,
+        "end": 50,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 136,
+        "end": 162,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 255,
+        "end": 256,
+        "type": "Modifier"
+      },
+      {
+        "start": 269,
+        "end": 279,
+        "type": "Modifier"
+      },
+      {
+        "start": 280,
+        "end": 286,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 357,
+        "end": 358,
+        "type": "Modifier"
+      },
+      {
+        "start": 370,
+        "end": 375,
+        "type": "Modifier"
+      },
+      {
+        "start": 408,
+        "end": 428,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 569,
+        "end": 607,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 698,
+        "end": 703,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 720,
+        "end": 725,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 864,
+        "end": 886,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 887,
+        "end": 908,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 950,
+        "end": 956,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1057,
+        "end": 1063,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1138,
+        "end": 1141,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1142,
+        "end": 1149,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1288,
+        "end": 1309,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1310,
+        "end": 1327,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1332,
+        "end": 1362,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1453,
+        "end": 1464,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0070",
+    "pmid": "8828602",
+    "entities": [
+      {
+        "start": 17,
+        "end": 32,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 34,
+        "end": 59,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 61,
+        "end": 64,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 72,
+        "end": 100,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 113,
+        "end": 160,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 217,
+        "end": 220,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 735,
+        "end": 738,
+        "type": "Modifier"
+      },
+      {
+        "start": 1017,
+        "end": 1020,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0071",
+    "pmid": "8944023",
+    "entities": [
+      {
+        "start": 92,
+        "end": 128,
+        "type": "Modifier"
+      },
+      {
+        "start": 714,
+        "end": 727,
+        "type": "Modifier"
+      },
+      {
+        "start": 795,
+        "end": 801,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0072",
+    "pmid": "8682510",
+    "entities": [
+      {
+        "start": 0,
+        "end": 24,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 139,
+        "end": 143,
+        "type": "Modifier"
+      },
+      {
+        "start": 162,
+        "end": 186,
+        "type": "Modifier"
+      },
+      {
+        "start": 259,
+        "end": 262,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 287,
+        "end": 312,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 734,
+        "end": 738,
+        "type": "Modifier"
+      },
+      {
+        "start": 951,
+        "end": 954,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0073",
+    "pmid": "8954016",
+    "entities": [
+      {
+        "start": 0,
+        "end": 6,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 19,
+        "end": 46,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 51,
+        "end": 69,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 86,
+        "end": 94,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 94,
+        "end": 101,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 101,
+        "end": 102,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 107,
+        "end": 128,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 186,
+        "end": 202,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 204,
+        "end": 234,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 235,
+        "end": 253,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 255,
+        "end": 261,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 269,
+        "end": 295,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 413,
+        "end": 417,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 417,
+        "end": 428,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 444,
+        "end": 460,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 464,
+        "end": 485,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 576,
+        "end": 591,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 620,
+        "end": 627,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 690,
+        "end": 693,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 698,
+        "end": 700,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 770,
+        "end": 772,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 865,
+        "end": 890,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1034,
+        "end": 1037,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1211,
+        "end": 1239,
+        "type": "Modifier"
+      },
+      {
+        "start": 1243,
+        "end": 1244,
+        "type": "Modifier"
+      },
+      {
+        "start": 1688,
+        "end": 1700,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1700,
+        "end": 1703,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1703,
+        "end": 1704,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1772,
+        "end": 1781,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1788,
+        "end": 1805,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1834,
+        "end": 1842,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1842,
+        "end": 1850,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 2026,
+        "end": 2031,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0074",
+    "pmid": "8692963",
+    "entities": [
+      {
+        "start": 431,
+        "end": 459,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 460,
+        "end": 472,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1578,
+        "end": 1590,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0075",
+    "pmid": "8968716",
+    "entities": [
+      {
+        "start": 120,
+        "end": 145,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 420,
+        "end": 445,
+        "type": "Modifier"
+      },
+      {
+        "start": 720,
+        "end": 726,
+        "type": "Modifier"
+      },
+      {
+        "start": 734,
+        "end": 748,
+        "type": "Modifier"
+      },
+      {
+        "start": 921,
+        "end": 937,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 941,
+        "end": 946,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 947,
+        "end": 953,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 953,
+        "end": 954,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 1038,
+        "end": 1044,
+        "type": "Modifier"
+      },
+      {
+        "start": 1094,
+        "end": 1100,
+        "type": "Modifier"
+      },
+      {
+        "start": 1324,
+        "end": 1337,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1369,
+        "end": 1375,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1525,
+        "end": 1551,
+        "type": "CompositeMention"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0076",
+    "pmid": "8956035",
+    "entities": [
+      {
+        "start": 423,
+        "end": 437,
+        "type": "Modifier"
+      },
+      {
+        "start": 475,
+        "end": 479,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 479,
+        "end": 481,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 792,
+        "end": 798,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 799,
+        "end": 809,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 817,
+        "end": 820,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0077",
+    "pmid": "8825052",
+    "entities": [
+      {
+        "start": 40,
+        "end": 48,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 129,
+        "end": 137,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 395,
+        "end": 403,
+        "type": "Modifier"
+      },
+      {
+        "start": 570,
+        "end": 578,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 744,
+        "end": 752,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 810,
+        "end": 827,
+        "type": "Modifier"
+      },
+      {
+        "start": 878,
+        "end": 902,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0078",
+    "pmid": "8589723",
+    "entities": [
+      {
+        "start": 0,
+        "end": 14,
+        "type": "Modifier"
+      },
+      {
+        "start": 198,
+        "end": 211,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 230,
+        "end": 244,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 703,
+        "end": 710,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 722,
+        "end": 735,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 829,
+        "end": 865,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 974,
+        "end": 988,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1271,
+        "end": 1296,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1320,
+        "end": 1333,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1490,
+        "end": 1506,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0079",
+    "pmid": "8649785",
+    "entities": [
+      {
+        "start": 93,
+        "end": 113,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 158,
+        "end": 178,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 228,
+        "end": 234,
+        "type": "Modifier"
+      },
+      {
+        "start": 544,
+        "end": 551,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 713,
+        "end": 720,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 769,
+        "end": 783,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 844,
+        "end": 850,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0080",
+    "pmid": "9241282",
+    "entities": [
+      {
+        "start": 38,
+        "end": 56,
+        "type": "Modifier"
+      },
+      {
+        "start": 92,
+        "end": 110,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 115,
+        "end": 135,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 137,
+        "end": 139,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 148,
+        "end": 187,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 351,
+        "end": 353,
+        "type": "Modifier"
+      },
+      {
+        "start": 469,
+        "end": 507,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1006,
+        "end": 1008,
+        "type": "Modifier"
+      },
+      {
+        "start": 1470,
+        "end": 1472,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0081",
+    "pmid": "9122265",
+    "entities": [
+      {
+        "start": 14,
+        "end": 51,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 108,
+        "end": 145,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 152,
+        "end": 189,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0082",
+    "pmid": "9012404",
+    "entities": [
+      {
+        "start": 47,
+        "end": 60,
+        "type": "Modifier"
+      },
+      {
+        "start": 110,
+        "end": 123,
+        "type": "Modifier"
+      },
+      {
+        "start": 210,
+        "end": 231,
+        "type": "Modifier"
+      },
+      {
+        "start": 307,
+        "end": 335,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 422,
+        "end": 443,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 562,
+        "end": 580,
+        "type": "Modifier"
+      },
+      {
+        "start": 694,
+        "end": 712,
+        "type": "Modifier"
+      },
+      {
+        "start": 772,
+        "end": 778,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 797,
+        "end": 811,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 875,
+        "end": 893,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 919,
+        "end": 940,
+        "type": "CompositeMention"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0083",
+    "pmid": "8733131",
+    "entities": [
+      {
+        "start": 18,
+        "end": 50,
+        "type": "Modifier"
+      },
+      {
+        "start": 99,
+        "end": 118,
+        "type": "Modifier"
+      },
+      {
+        "start": 118,
+        "end": 121,
+        "type": "Modifier"
+      },
+      {
+        "start": 123,
+        "end": 130,
+        "type": "Modifier"
+      },
+      {
+        "start": 251,
+        "end": 254,
+        "type": "Modifier"
+      },
+      {
+        "start": 303,
+        "end": 352,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 354,
+        "end": 374,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 379,
+        "end": 396,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 439,
+        "end": 442,
+        "type": "Modifier"
+      },
+      {
+        "start": 472,
+        "end": 492,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 497,
+        "end": 514,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 614,
+        "end": 617,
+        "type": "Modifier"
+      },
+      {
+        "start": 1112,
+        "end": 1115,
+        "type": "Modifier"
+      },
+      {
+        "start": 1520,
+        "end": 1521,
+        "type": "Modifier"
+      },
+      {
+        "start": 1620,
+        "end": 1621,
+        "type": "Modifier"
+      },
+      {
+        "start": 1698,
+        "end": 1701,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0084",
+    "pmid": "9195227",
+    "entities": [
+      {
+        "start": 31,
+        "end": 56,
+        "type": "Modifier"
+      },
+      {
+        "start": 149,
+        "end": 177,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 182,
+        "end": 183,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 183,
+        "end": 188,
+        "type": "Modifier"
+      },
+      {
+        "start": 201,
+        "end": 218,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 329,
+        "end": 335,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 630,
+        "end": 636,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 681,
+        "end": 694,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 914,
+        "end": 921,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1067,
+        "end": 1070,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1094,
+        "end": 1111,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0085",
+    "pmid": "8675707",
+    "entities": [
+      {
+        "start": 10,
+        "end": 32,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 275,
+        "end": 297,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 299,
+        "end": 302,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 842,
+        "end": 845,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 936,
+        "end": 939,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1004,
+        "end": 1007,
+        "type": "Modifier"
+      },
+      {
+        "start": 1195,
+        "end": 1198,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1333,
+        "end": 1336,
+        "type": "Modifier"
+      },
+      {
+        "start": 1363,
+        "end": 1378,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1424,
+        "end": 1427,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1456,
+        "end": 1459,
+        "type": "Modifier"
+      },
+      {
+        "start": 1710,
+        "end": 1713,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0086",
+    "pmid": "8808606",
+    "entities": [
+      {
+        "start": 81,
+        "end": 99,
+        "type": "Modifier"
+      },
+      {
+        "start": 128,
+        "end": 146,
+        "type": "Modifier"
+      },
+      {
+        "start": 148,
+        "end": 150,
+        "type": "Modifier"
+      },
+      {
+        "start": 266,
+        "end": 268,
+        "type": "Modifier"
+      },
+      {
+        "start": 441,
+        "end": 443,
+        "type": "Modifier"
+      },
+      {
+        "start": 755,
+        "end": 757,
+        "type": "Modifier"
+      },
+      {
+        "start": 1244,
+        "end": 1262,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0087",
+    "pmid": "9223307",
+    "entities": [
+      {
+        "start": 56,
+        "end": 77,
+        "type": "Modifier"
+      },
+      {
+        "start": 126,
+        "end": 142,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 143,
+        "end": 164,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 166,
+        "end": 169,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 587,
+        "end": 590,
+        "type": "Modifier"
+      },
+      {
+        "start": 659,
+        "end": 662,
+        "type": "Modifier"
+      },
+      {
+        "start": 973,
+        "end": 976,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0088",
+    "pmid": "8651278",
+    "entities": [
+      {
+        "start": 43,
+        "end": 68,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 136,
+        "end": 161,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1345,
+        "end": 1350,
+        "type": "Modifier"
+      },
+      {
+        "start": 1388,
+        "end": 1394,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0089",
+    "pmid": "8625410",
+    "entities": [
+      {
+        "start": 0,
+        "end": 24,
+        "type": "Modifier"
+      },
+      {
+        "start": 279,
+        "end": 303,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 305,
+        "end": 308,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 910,
+        "end": 918,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 936,
+        "end": 939,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0090",
+    "pmid": "9272171",
+    "entities": [
+      {
+        "start": 12,
+        "end": 39,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 41,
+        "end": 55,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 213,
+        "end": 240,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 242,
+        "end": 256,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 258,
+        "end": 264,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 476,
+        "end": 494,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 495,
+        "end": 513,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1479,
+        "end": 1482,
+        "type": "Modifier"
+      },
+      {
+        "start": 1677,
+        "end": 1680,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1779,
+        "end": 1782,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0091",
+    "pmid": "8589722",
+    "entities": [
+      {
+        "start": 117,
+        "end": 152,
+        "type": "CompositeMention"
+      },
+      {
+        "start": 724,
+        "end": 730,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0092",
+    "pmid": "9144439",
+    "entities": [
+      {
+        "start": 95,
+        "end": 130,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 246,
+        "end": 281,
+        "type": "Modifier"
+      },
+      {
+        "start": 422,
+        "end": 426,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 465,
+        "end": 469,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 610,
+        "end": 614,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 651,
+        "end": 655,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 720,
+        "end": 724,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 944,
+        "end": 948,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1108,
+        "end": 1112,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0093",
+    "pmid": "8929413",
+    "entities": []
+  },
+  {
+    "record_id": "NCBI_validation-0094",
+    "pmid": "8845838",
+    "entities": [
+      {
+        "start": 1346,
+        "end": 1362,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1471,
+        "end": 1487,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0095",
+    "pmid": "8892662",
+    "entities": [
+      {
+        "start": 23,
+        "end": 47,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 49,
+        "end": 73,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 75,
+        "end": 78,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 120,
+        "end": 140,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 153,
+        "end": 163,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 174,
+        "end": 196,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 244,
+        "end": 247,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1030,
+        "end": 1033,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1091,
+        "end": 1094,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 1135,
+        "end": 1172,
+        "type": "DiseaseClass"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0096",
+    "pmid": "8622978",
+    "entities": [
+      {
+        "start": 26,
+        "end": 40,
+        "type": "Modifier"
+      },
+      {
+        "start": 88,
+        "end": 119,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 180,
+        "end": 194,
+        "type": "Modifier"
+      },
+      {
+        "start": 260,
+        "end": 291,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 316,
+        "end": 327,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1405,
+        "end": 1436,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0097",
+    "pmid": "8968760",
+    "entities": [
+      {
+        "start": 0,
+        "end": 21,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 100,
+        "end": 128,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 129,
+        "end": 150,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 152,
+        "end": 155,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 175,
+        "end": 198,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 200,
+        "end": 216,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 221,
+        "end": 227,
+        "type": "Modifier"
+      },
+      {
+        "start": 244,
+        "end": 246,
+        "type": "Modifier"
+      },
+      {
+        "start": 288,
+        "end": 294,
+        "type": "Modifier"
+      },
+      {
+        "start": 320,
+        "end": 323,
+        "type": "Modifier"
+      },
+      {
+        "start": 563,
+        "end": 566,
+        "type": "Modifier"
+      },
+      {
+        "start": 1095,
+        "end": 1098,
+        "type": "Modifier"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0098",
+    "pmid": "8755918",
+    "entities": [
+      {
+        "start": 48,
+        "end": 69,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 107,
+        "end": 128,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 130,
+        "end": 133,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 261,
+        "end": 264,
+        "type": "Modifier"
+      },
+      {
+        "start": 824,
+        "end": 837,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 837,
+        "end": 841,
+        "type": "DiseaseClass"
+      },
+      {
+        "start": 1004,
+        "end": 1007,
+        "type": "Modifier"
+      },
+      {
+        "start": 1095,
+        "end": 1098,
+        "type": "SpecificDisease"
+      }
+    ]
+  },
+  {
+    "record_id": "NCBI_validation-0099",
+    "pmid": "8696339",
+    "entities": [
+      {
+        "start": 176,
+        "end": 194,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 196,
+        "end": 198,
+        "type": "SpecificDisease"
+      },
+      {
+        "start": 430,
+        "end": 432,
+        "type": "Modifier"
+      },
+      {
+        "start": 709,
+        "end": 711,
+        "type": "SpecificDisease"
+      }
+    ]
+  }
+]

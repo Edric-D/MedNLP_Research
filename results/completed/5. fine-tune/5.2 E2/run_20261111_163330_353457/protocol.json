@@ -1,0 +1,36 @@
+{
+  "experiment": "E2",
+  "baseline": {
+    "root": "/home/administrator/MedNLP_Research",
+    "output_dir": "results/completed/5. fine-tune/5.2 E2/run_20261111_163330_353457",
+    "e1_config_path": "/home/administrator/MedNLP_Research/results/completed/5. fine-tune/5.1 E1/run_20261111_162541_367808/selected_config.json",
+    "model": "dmis-lab/biobert-base-cased-v1.1",
+    "epochs": 30,
+    "batch_size": 8,
+    "weight_decay": 0.01,
+    "scheduler": "constant",
+    "patience": 3,
+    "loss": "cross_entropy",
+    "seed": 9444,
+    "dropout": 0.1,
+    "encoder_learning_rate": 1e-05,
+    "head_learning_rate": 0.00075,
+    "max_length": 512,
+    "stride": 64,
+    "micro_batch_size": 8,
+    "cuda_fast_mode": true,
+    "cuda_evaluation_batch_size": 32,
+    "limit_docs": null,
+    "evaluate_test": true
+  },
+  "selection": "maximum Validation typed exact span micro F1",
+  "tie_break": "first candidate with equal Validation F1",
+  "seeds": [
+    42,
+    9444,
+    2026
+  ],
+  "smoke_only": false,
+  "test_policy": "all three checkpoints selected before Test access",
+  "implementation": "inline notebook"
+}

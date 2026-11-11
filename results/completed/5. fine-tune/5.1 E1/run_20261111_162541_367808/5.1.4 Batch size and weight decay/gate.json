@@ -1,0 +1,6 @@
+{
+  "baseline_f1": 0.420010422094841,
+  "best_batch_f1": 0.420010422094841,
+  "threshold": 0.0,
+  "search_weight_decay": false
+}

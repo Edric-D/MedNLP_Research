@@ -1,6 +1,6 @@
 # COMP9444 Biomedical Disease NER
 
-当前已完成数据管道、统一评估和 **E1 Head-only baseline**，并在 notebook 中复现；E2–E6 待完成。
+当前已完成数据管道、统一评估，以及 Notebook 中的 **E1 Head-only baseline** 和 **E2 Partial fine-tuning**。E3–E6 待完成。
 最终仅提交 `MedNLP_research.ipynb`。运行方式见[第 14 节](#14-notebook-运行与提交)。
 
 ## 1. 项目目标
@@ -240,8 +240,8 @@ E1–E3 可以针对各自的参数规模，在 Validation 上选择合理 learn
 
 | 实验 | Encoder learning rate | Head learning rate |
 |---|---:|---:|
-| E1 Head-only | — | `1e-4, 5e-4, 1e-3` |
-| E2 Partial | `1e-5, 2e-5, 3e-5` | `1e-4` |
+| E1 Head-only | — | `5e-4, 7.5e-4, 1e-3, 1.5e-3, 2e-3` |
+| E2 Partial | `1e-5, 2e-5, 3e-5` | `5e-5, 1e-4, 2e-4` |
 | E3 Full | `1e-5, 2e-5, 3e-5` | `1e-4` |
 
 调参只能使用 Validation，不能使用 Test。
@@ -385,62 +385,37 @@ MLM loss 只用于：
 
 ## 9. 最终结果表
 
-| ID | Method | Encoder trainable scope | Adaptation | Precision | Recall | Micro F1 | Macro F1 | Time |
+| ID | Method | Encoder trainable scope | Adaptation | Precision (%) | Recall (%) | Micro F1 (%) | Macro F1 (%) | Train (s) |
 |---|---|---|---|---:|---:|---:|---:|---:|
-| E1 | Head-only | 0 Transformer layers | None | 35.96% | 54.69% | 43.39% | 29.54% | 411.93 s |
-| E2 | Partial | Last 4 layers | None | — | — | — | — | — |
+| E1 | Head-only | 0 Transformer layers | None | 36.27 ± 1.22 | 54.65 ± 1.46 | 43.60 ± 1.32 | 29.41 ± 1.32 | 21.19 ± 0.40 |
+| E2 | Partial | Last 4 layers | None | 66.95 ± 2.96 | 78.72 ± 2.32 | 72.35 ± 2.60 | 59.96 ± 2.68 | 18.24 ± 2.66 |
 | E3 | Full | All layers | None | — | — | — | — | — |
 | E4 | Standard MLM + Full | All layers | Random-token TAPT | — | — | — | — | — |
 | E5 | WWM + Full | All layers | Whole-word TAPT | — | — | — | — | — |
 | E6 | Entity MLM + Full | All layers | Entity-aware TAPT | — | — | — | — | — |
 
-表中 Precision、Recall、Micro F1 和 Macro F1 均为 **Testing** 指标。
-Time 为所选学习率整次运行的训练、逐轮验证及 checkpoint 保存耗时，不含其他候选学习率和最终测试。
-当前结果来自 seed=42、Metal（MPS）的单次 notebook 运行；尚无跨种子均值和标准差。
+E1 和 E2 来自 2026-11-11 在 WSL（RTX 5090、CUDA）上完成的同一组 Notebook 运行。表中为种子 42、9444、2026 的均值 ± 样本标准差。Precision、Recall、Micro F1 和 Macro F1 均为 Testing 的严格 typed exact-span 指标。Train 仅统计最终三次种子训练的训练时间，单位为秒，不含调参、验证和测试。
 
-### 9.1 E1 配置与验证集选型
+### 9.1 实验配置与 Validation 选型
 
-| 配置 | 值 |
-|---|---|
-| Backbone | `dmis-lab/biobert-base-cased-v1.1`（全部冻结） |
-| 可训练参数 / 总参数 | 6,921 / 107,726,601 |
-| Optimizer | AdamW，weight decay=0.01，gradient clipping=1.0 |
-| Batch size / seed | 8 / 42 |
-| 最大 epochs / patience | 30 / 3 |
-| Max length / stride | 512 / 64 |
-| 最终 head learning rate / 最佳 epoch | `1e-3` / 21 |
-| 实际停止 epoch | 24（连续 3 轮验证 F1 未改善） |
-| 设备 / 峰值 GPU 显存 | MPS / 无可用峰值统计，记录为 `null` |
+两组使用 BioBERT、AdamW、cross-entropy、恒定学习率、batch size 8、weight decay 0.01 和 dropout 0.1。最多训练 30 轮，早停 patience 为 3。滑窗长度 512，重叠参数 stride 为 64。
 
-| Head learning rate | 实际 epochs | 最佳 epoch | Validation Micro F1 | Time |
-|---|---:|---:|---:|---:|
-| 1e-4 | 4 | 1 | 0.00% | 69.53 s |
-| 5e-4 | 30 | 29 | 39.71% | 534.88 s |
-| 1e-3 | 24 | 21 | 41.84% | 411.93 s |
+| 实验 | 训练范围 | 最终 Encoder LR | 最终 Head LR | Validation Micro F1 (%) | 运行记录 |
+|---|---|---:|---:|---:|---|
+| E1 | 仅分类头 | — | 7.5e-4 | 41.44 ± 0.48 | [配置](results/completed/5.%20fine-tune/5.1%20E1/run_20261111_162541_367808/selected_config.json) · [最终指标](results/completed/5.%20fine-tune/5.1%20E1/run_20261111_162541_367808/5.1.5%20Seeds%20and%20final%20results/final_results.csv) |
+| E2 | Transformer 层 8–11 + 分类头 | 3e-05 | 5e-05 | 71.72 ± 0.41 | [配置](results/completed/5.%20fine-tune/5.2%20E2/run_20261111_163330_353457/selected_config.json) · [最终指标](results/completed/5.%20fine-tune/5.2%20E2/run_20261111_163330_353457/5.2.3%20Seeds%20and%20final%20results/final_results.csv) |
 
-仅按 Validation 的 typed exact-span Micro F1 选择学习率和 checkpoint，随后对 Test 评估。
-`1e-4` 因连续零 F1 在第 4 轮早停，其分数只表示本次预算和早停规则下的表现。
+E1 在 Validation 上依次选择 head learning rate、dropout、loss 和 scheduler，并根据 batch size 搜索结果决定是否继续搜索 weight decay。E2 使用本次 E1 选出的 head learning rate 搜索 encoder learning rate，再固定 encoder learning rate 搜索 head learning rate。两组均在锁定配置并选出三个种子的 checkpoint 后运行 Testing。
 
-### 9.2 E1 最终指标与错误统计
+### 9.2 各随机种子的最终指标
 
-| Split | Precision | Recall | Micro F1 | Macro F1 | Span-only F1 | 非法 BIO 转移 | 重叠 token 冲突 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Validation | 35.49% | 50.95% | 41.84% | 33.08% | 44.24% | 443 | 9 |
-| Testing | 35.96% | 54.69% | 43.39% | 29.54% | 44.55% | 616 | 3 |
+| Seed | E1 Validation Micro F1 (%) | E1 Testing Micro F1 (%) | E2 Validation Micro F1 (%) | E2 Testing Micro F1 (%) |
+|---:|---:|---:|---:|---:|
+| 42 | 41.17 | 42.29 | 71.36 | 69.52 |
+| 9444 | 42.00 | 44.93 | 72.16 | 74.64 |
+| 2026 | 41.16 | 43.57 | 71.63 | 72.89 |
 
-Testing 各类型表现：
-
-| Mention type | Precision | Recall | F1 | Gold support |
-|---|---:|---:|---:|---:|
-| SpecificDisease | 42.22% | 63.60% | 50.75% | 555 |
-| DiseaseClass | 14.29% | 28.10% | 18.94% | 121 |
-| CompositeMention | 2.08% | 5.00% | 2.94% | 20 |
-| Modifier | 40.53% | 51.89% | 45.51% | 264 |
-
-冻结 backbone 的 E1 在 `CompositeMention` 上仍较弱，且存在较多非法 BIO 转移。
-这是后续 E2/E3 的比较基线；单一 seed 和当前训练预算不足以支持稳定性或充分收敛的结论。
-
-如果计算资源允许，重要结果使用至少 3 个随机种子，例如 `42, 43, 44`，并报告 `mean F1 ± standard deviation`。
+本轮 E2 的 Testing Micro F1 均值比 E1 高 **28.75 个百分点**。分类型结果见 [E1](results/completed/5.%20fine-tune/5.1%20E1/run_20261111_162541_367808/5.1.5%20Seeds%20and%20final%20results/per_type_results.csv) 和 [E2](results/completed/5.%20fine-tune/5.2%20E2/run_20261111_163330_353457/5.2.3%20Seeds%20and%20final%20results/per_type_results.csv)。
 
 ---
 
@@ -462,28 +437,8 @@ Testing 各类型表现：
 
 E1、E2 和 Notebook 只保留完成训练、验证及最终 Testing 的正式运行结果。异常或 Ctrl+C 会清理本次输出，smoke test 和仅验证的运行也不会保留结果。运行期间的文件由 Git 忽略，进程被强制终止后残留的文件仍会被忽略。正式报告可从 `results/completed/` 加入 Git。模型 checkpoint 仅保存在本地。
 
-Notebook 的正式运行目录结构如下。
+Notebook 的 E1 和 E2 运行目录分别位于 `results/completed/5. fine-tune/5.1 E1/` 和 `results/completed/5. fine-tune/5.2 E2/`。每次运行包含协议、选定配置、各搜索阶段及最终种子结果。最终结果目录包含 `summary.json`、`final_results.csv`、分类型结果和逐种子的 Testing 指标及预测。
 
-```text
-results/completed/E1_notebook/<run_id>/
-├── <learning_rate>/
-│   ├── config.json
-│   ├── history.json
-│   ├── summary.json
-│   ├── best_checkpoint/
-│   ├── validation_metrics.json
-│   └── validation_predictions.json
-├── selection.json
-├── selected_test/
-│   ├── evaluation_config.json
-│   ├── test_metrics.json
-│   └── test_predictions.json
-├── results.json
-└── learning_curves.csv
-```
-
-Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保存后即可随 `.ipynb` 提交。
-本地生成的数据、模型及旧运行目录仍由 `.gitignore` 排除。
 
 ---
 
@@ -498,7 +453,7 @@ Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保�
 6. 实现共享 MLM 训练器和三种 masking collator
 7. 独立生成 E4、E5、E6 的 adapted checkpoints
 8. 使用与 E3 相同的 NER 配置完成 E4、E5、E6
-9. 各方法配置冻结后运行 Testing（E1 已完成），不得基于 Test 回头调参
+9. 各方法配置冻结后运行 Testing（E1、E2 已完成），不得基于 Test 回头调参
 10. 汇总性能、训练成本、稳定性和错误分析
 ```
 
@@ -510,7 +465,7 @@ Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保�
 - [x] 固定的 9 类 typed-BIO label map；
 - [x] 滑动窗口、重叠 logits 聚合和全局 BIO 解码；
 - [x] E1 Head-only baseline；
-- [ ] E2 Partial fine-tuning；
+- [x] E2 Partial fine-tuning；
 - [ ] E3 Full fine-tuning；
 - [ ] E4 Standard Random-Token MLM + Full NER；
 - [ ] E5 Whole-Word MLM + Full NER；
@@ -529,11 +484,9 @@ Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保�
 
 ## 14. Notebook 运行与提交
 
-1. 打开 `MedNLP_research.ipynb`，选择已验证的 `你自己的` 内核（Python 3.10、PyTorch 2.9.0、Transformers 5.3.0），或使用具备同等依赖的环境。
-2. 从上到下运行全部单元格。首次运行需要网络连接；notebook 会安装缺失依赖、下载 NCBI 数据和模型，并生成处理后的数据，无需额外提供仓库文件。
-3. 第 5 节 E1 直接读取代码块顶部的配置，无需命令行参数。正式运行保持 `E1_SMOKE_DOCS = None`；设为 `2` 仅用于流程检查，不能作为正式实验结果。
-4. E1 会独立比较三个学习率，根据 Validation F1 选模型，再评估 Test。设备自动优先选择 Metal（MPS），其次 CUDA，最后 CPU。
-5. 运行完成后保存 notebook 及其输出，**最终仅提交该 `.ipynb` 文件**。每次重跑都会创建新的运行目录，耗时和浮点结果可能随环境变化。
+1. 打开 `MedNLP_research.ipynb`，选择项目的 Python 内核。本次 WSL 运行使用 Python 3.12、PyTorch 2.9.0+cu128 和 Transformers 5.3.0。
+2. 从上到下运行单元格。首次运行需要联网安装缺失依赖和获取模型或数据。
+3. 正式运行保留 `SMOKE_TEST = False`，依次完成 E1 和 E2。E2 从同一 Notebook 会话中的 E1 选型结果读取配置。
+4. 完成后保存 Notebook。正式结果可随 Notebook 提交，结果路径见第 10 节。
 
-仓库保留 `e1_head_only.py` 作为开发参考，notebook 不依赖该文件。
-前期实验的详细记录见 [E1 实验报告](experiments/E1/README.md)；上面的结果表采用最新 notebook 复现记录，耗时可能与前期运行不同。
+Notebook 内联实现 E1 和 E2。较早的独立 E1 运行见 [E1 实验报告](experiments/E1/README.md)。
