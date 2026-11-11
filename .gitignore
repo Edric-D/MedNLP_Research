@@ -49,3 +49,10 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Files extracted from the local WSL transfer package
+/TRANSFER_README.md
+/environment-source.txt
+/requirements-transfer.txt
+/setup-wsl.sh
+/verify_gpu.py
