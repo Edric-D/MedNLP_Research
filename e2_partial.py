@@ -11,6 +11,8 @@ import importlib.metadata
 import json
 from pathlib import Path
 
+from run_outputs import result_directory
+
 from e1_head_only import (
     LABELS, decode_document, evaluate_standardized_records,
     index_records, load_jsonl_records, make_windows, select_device,
@@ -50,7 +52,7 @@ def set_e2_training_mode(model):
         layer.eval()
 
 
-def run_trial(args):
+def run_trial(args, *, reserved=False):
     """Train one independent configuration, or evaluate one selected checkpoint."""
     import random
     import subprocess
@@ -59,7 +61,7 @@ def run_trial(args):
     from torch.utils.data import DataLoader
     from transformers import AutoModelForTokenClassification, AutoTokenizer, BertConfig
 
-    if args.output_dir.exists() and any(args.output_dir.iterdir()):
+    if not reserved and args.output_dir.exists() and any(args.output_dir.iterdir()):
         raise ValueError('output-dir must be empty; choose a new directory for each run')
     args.output_dir.mkdir(parents=True, exist_ok=True)
     random.seed(args.seed)
@@ -245,13 +247,19 @@ def write_json(path, value):
 
 def run_sweep(args):
     """Select only on Validation, freeze that choice, then evaluate Test once."""
+    keep = args.limit_docs is None and not args.validation_only
+    with result_directory(args.output_dir, keep=keep):
+        results = _run_sweep(args)
+    print(f'E2 complete | Results: {args.output_dir.resolve()}' if keep else
+          'E2 complete | Temporary results discarded', flush=True)
+    return results
+
+
+def _run_sweep(args):
     import csv
     from types import SimpleNamespace
 
     root = args.output_dir
-    if root.exists() and any(root.iterdir()):
-        raise ValueError('Search output directory must be empty; existing runs are preserved')
-    root.mkdir(parents=True, exist_ok=True)
     write_json(root / 'sweep_config.json', {
         key: str(value) if isinstance(value, Path) else value
         for key, value in vars(args).items()
@@ -300,7 +308,6 @@ def run_sweep(args):
             writer = csv.DictWriter(stream, fieldnames=list(curves[0]), lineterminator='\n')
             writer.writeheader()
             writer.writerows(curves)
-        write_json(root / 'results.json', results)
         print(f"\nSelected encoder LR={selected['encoder_learning_rate']:g}, "
               f"epoch={selected['best_epoch']}, validation F1={selected['best_validation_f1']:.4f}", flush=True)
         if not args.validation_only:
@@ -311,7 +318,6 @@ def run_sweep(args):
             evaluation.test = True
             run_trial(evaluation)
             results['test'] = json.loads((evaluation.output_dir / 'test_metrics.json').read_text())
-            write_json(root / 'results.json', results)
             release_device_cache()
         lines = ['# E2 partial fine-tuning', '',
                  'SMOKE TEST ONLY: not formal results.' if args.limit_docs is not None else f'Single-seed formal run (seed={args.seed}).', '',
@@ -328,8 +334,7 @@ def run_sweep(args):
                   'MPS peak GPU memory is unavailable (null). Full per-type metrics and confusion matrices are in results.json.',
                   'Training time includes per-epoch Validation and checkpoint saves; excludes other LR candidates and final Test.']
         (root / 'summary.md').write_text('\n'.join(lines) + '\n')
-        print('SMOKE TEST ONLY' if args.limit_docs is not None else 'E2 complete', flush=True)
-        print(f'Results: {root.resolve()}', flush=True)
+        write_json(root / 'results.json', results)
         return results
     except BaseException as error:
         write_json(root / 'sweep_failure.json', {'error': repr(error), 'completed_candidates': candidates})
@@ -377,12 +382,16 @@ def main():
         parser.error('Use max-length <= 512 and 0 <= stride < max-length - 2')
     if args.output_dir is None:
         run_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S_%fZ')
-        args.output_dir = Path(__file__).resolve().parent / 'results/E2_partial_sweep' / run_id
+        args.output_dir = Path(__file__).resolve().parent / 'results/completed/E2_partial_sweep' / run_id
     print(f'Output directory: {args.output_dir.resolve()}', flush=True)
     if args.encoder_learning_rate is not None or args.evaluate_checkpoint:
         if args.encoder_learning_rate is None:
             args.encoder_learning_rate = 2e-5  # No optimization occurs in evaluation-only mode.
-        run_trial(args)
+        keep = args.limit_docs is None and args.test and args.evaluate_checkpoint is None
+        with result_directory(args.output_dir, keep=keep):
+            run_trial(args, reserved=True)
+        print(f'E2 complete | Results: {args.output_dir.resolve()}' if keep else
+              'E2 complete | Temporary results discarded', flush=True)
     else:
         run_sweep(args)
 

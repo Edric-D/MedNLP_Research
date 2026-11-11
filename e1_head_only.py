@@ -3,6 +3,8 @@ from collections import Counter
 import json
 from pathlib import Path
 
+from run_outputs import result_directory
+
 
 EVALUATION_ENTITY_TYPES = (
     "SpecificDisease",
@@ -381,7 +383,7 @@ import time
 class E1Config:
     root: Path = Path(__file__).resolve().parent
     # Keep each direct run in a separate Sydney timestamp folder
-    output_dir: Path = field(default_factory=lambda: Path('results/5. fine-tune/5.1 E1') /
+    output_dir: Path = field(default_factory=lambda: Path('results/completed/5. fine-tune/5.1 E1') /
                              datetime.now(ZoneInfo('Australia/Sydney')).strftime('run_%Y%m%d_%H%M%S_%f'))
     model: str = 'dmis-lab/biobert-base-cased-v1.1'
     epochs: int = 30
@@ -868,28 +870,6 @@ def run_or_reuse_trial(config, output_dir, data, runner):
     return runner(config, output_dir, data)
 
 
-# Resume the latest failed formal run when executing the script again
-def direct_run_config():
-    config = E1Config()
-    parent = config.root / config.output_dir.parent
-    if not parent.exists():
-        return config
-    for folder in sorted(parent.glob('run_*'), reverse=True):
-        protocol_path = folder / 'protocol.json'
-        if not protocol_path.exists() or (folder / '5.1.5 Seeds and final results/summary.json').exists():
-            continue
-        protocol = json.loads(protocol_path.read_text(encoding='utf-8'))
-        if protocol.get('smoke_only') or not any(folder.rglob('failure.json')):
-            continue
-        baseline = protocol['baseline']
-        baseline['root'] = Path(baseline['root'])
-        baseline['output_dir'] = folder.resolve()
-        baseline['resume'] = True
-        print(f'Resuming failed E1 run: {folder}', flush=True)
-        return E1Config(**baseline)
-    return config
-
-
 # Execute ordered searches before opening the test split
 def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=None, render=True):
     configure_output()
@@ -903,10 +883,16 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
         config.loss, config.seed, config.dropout) != (8, 0.01, 'constant', 3, 'cross_entropy', 9444, 0.1):
         raise ValueError('Search must start from the fixed E1 baseline settings')
     output_dir = config.root / config.output_dir
-    if output_dir.exists() and any(output_dir.iterdir()) and not config.resume:
-        raise ValueError('Choose an empty output directory to preserve earlier results')
-    output_dir.mkdir(parents=True, exist_ok=True)
-    print(f'E1 results: {output_dir.resolve()}', flush=True)
+    keep = config.limit_docs is None and config.evaluate_test
+    with result_directory(output_dir, keep=keep):
+        result = _run_experiment(config, output_dir, trial_runner, prepare_data, test_runner, render)
+    print(f'E1 complete | Results: {output_dir.resolve()}' if keep else
+          'E1 complete | Temporary results discarded', flush=True)
+    return result
+
+
+def _run_experiment(config, output_dir, trial_runner, prepare_data, test_runner, render):
+    print(f'E1 output: {output_dir.resolve()}', flush=True)
     print('Loading and validating training and validation data', flush=True)
     trial_runner = trial_runner or run_trial
     test_runner = test_runner or evaluate_final_trial
@@ -980,10 +966,9 @@ def run_experiment(config, trial_runner=None, prepare_data=None, test_runner=Non
     if render:
         print('Generating result tables and figures', flush=True)
         render_results(output_dir, stages, trials, tests, summary)
-    print(f'E1 complete | Results: {output_dir.resolve()}', flush=True)
     return {'selected_config': asdict(selected), 'stages': stages, 'trials': trials, 'tests': tests, 'summary': summary}
 
 
 # Run directly after editing the settings above
 if __name__ == '__main__':
-    run_experiment(direct_run_config())
+    run_experiment(E1Config())

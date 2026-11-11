@@ -458,12 +458,14 @@ Testing 各类型表现：
 - 最佳 checkpoint 和选择原因；
 - 配置冻结后的 Testing 全部指标；
 - 逐文档预测，用于错误分析；
-- 失败、OOM、中断或其他异常说明。
+- 失败、OOM 或中断原因会在终端或 Notebook 中显示。
 
-Notebook 每次执行 E1 都生成新的运行目录：
+E1、E2 和 Notebook 只保留完成训练、验证及最终 Testing 的正式运行结果。异常或 Ctrl+C 会清理本次输出，smoke test 和仅验证的运行也不会保留结果。运行期间的文件由 Git 忽略，进程被强制终止后残留的文件仍会被忽略。正式报告可从 `results/completed/` 加入 Git。模型 checkpoint 仅保存在本地。
+
+Notebook 的正式运行目录结构如下。
 
 ```text
-results/E1_notebook/<run_id>/
+results/completed/E1_notebook/<run_id>/
 ├── <learning_rate>/
 │   ├── config.json
 │   ├── history.json
@@ -481,7 +483,7 @@ results/E1_notebook/<run_id>/
 ```
 
 Notebook 中同时展示汇总指标、类型混淆矩阵和学习曲线，保存后即可随 `.ipynb` 提交。
-本地生成的数据、模型和运行目录已由 `.gitignore` 排除。
+本地生成的数据、模型及旧运行目录仍由 `.gitignore` 排除。
 
 ---
 

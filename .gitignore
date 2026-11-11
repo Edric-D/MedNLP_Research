@@ -20,7 +20,9 @@ htmlcov/
 
 # Training outputs, downloaded models, and caches
 /baseline_results/
-/results/
+/results/*
+!/results/completed/
+.discarded-run-*/
 /outputs/
 /checkpoints/
 /models/
@@ -29,6 +31,7 @@ htmlcov/
 /wandb/
 .cache/
 checkpoint-*/
+best_checkpoint/
 *.pt
 *.pth
 *.ckpt
