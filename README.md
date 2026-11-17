@@ -96,7 +96,7 @@ MLM 阶段只能使用 Training 文本。Standard MLM 和 Whole-word MLM 不使�
 | E3 | Full fine-tuning | 无 | 全部 BioBERT 参数 + head |
 | E4 | Standard MLM + Full NER | Random-token TAPT | 全部 BioBERT 参数 + head |
 | E5 | Whole-word MLM + Full NER | Whole-word TAPT | 全部 BioBERT 参数 + head |
-| E6 | Entity-aware MLM + Full NER | Entity-span label-aware TAPT | 全部 BioBERT 参数 + head |
+| E6 | Medical-term-only Whole-span MLM + Full NER | Entity-span label-aware TAPT | 全部 BioBERT 参数 + head |
 
 E1–E3 回答“训练多少层”的问题；E3–E6 回答“MLM 适应和 masking 策略是否有效”的问题。E3 是两类比较共享的 no-adaptation 对照组，因此总数是 6 组而不是 7 组。
 
@@ -205,14 +205,14 @@ hemo  ##ch  ##rom  ##atosis
 
 Whole-word masking 会同时屏蔽所有 subword，而不是只屏蔽其中一个。E5 不使用实体标签。
 
-### E6. Entity-Aware Span MLM + Full NER
+### E6. Medical-Term-Only Whole-Span MLM + Full NER
 
 ```text
 原始 BioBERT
     ↓
 NCBI Training 文本 + Training entity offsets
     ↓
-优先屏蔽完整疾病实体 span，其余 mask 位置随机选择
+只选择完整疾病实体 span，并屏蔽其全部 WordPiece
     ↓
 保存 Entity-Aware-MLM adapted checkpoint
     ↓
@@ -221,14 +221,14 @@ NCBI Training 文本 + Training entity offsets
 Full NER fine-tuning
 ```
 
-推荐保持总 mask budget 约为 15%：
+目标 mask budget 仍约为 15%，但选择单位是不可拆分的完整医学词汇：
 
 ```text
-约 50% mask budget 来自完整疾病 span
-约 50% mask budget 来自随机非实体 word
+100% MLM targets 来自完整疾病 span
+普通非医学词汇不会被选为 MLM target
 ```
 
-没有实体的文本退化为 Whole-word MLM。E6 使用了 Training 实体 offset，因此应称为 **label-aware task adaptation**，不能宣称它是完全无监督的领域适应。
+对于没有完整医学词汇的 block，E6 不对其进行 MLM 采样，也不退化为普通 Whole-word MLM。当完整词汇跨过 15% budget 时，优先保证整词屏蔽，因此实际 mask fraction 可能略偏离 15%。E6 使用了 Training 实体 offset，因此应称为 **label-aware task adaptation**，不能宣称它是完全无监督的领域适应。
 
 ---
 
@@ -276,7 +276,7 @@ warmup_ratio: 0.1
 每个 MLM 实验都必须从同一个原始 BioBERT checkpoint 独立开始。禁止用以下累积流程作为三者对比：
 
 ```text
-Standard MLM -> Whole-word MLM -> Entity-aware MLM
+Standard MLM -> Whole-word MLM -> Medical-term-only Whole-span MLM
 ```
 
 否则后一种方法会继承前面的训练，无法归因。
@@ -392,7 +392,7 @@ MLM loss 只用于：
 | E3 | Full | All layers | None | — | — | — | — | — |
 | E4 | Standard MLM + Full | All layers | Random-token TAPT | — | — | — | — | — |
 | E5 | WWM + Full | All layers | Whole-word TAPT | — | — | — | — | — |
-| E6 | Entity MLM + Full | All layers | Entity-aware TAPT | — | — | — | — | — |
+| E6 | Medical-term-only MLM + Full | All layers | Whole-span label-aware TAPT | — | — | — | — | — |
 
 E1 和 E2 来自 2026-11-11 在 WSL（RTX 5090、CUDA）上完成的同一组 Notebook 运行。表中为种子 42、9444、2026 的均值 ± 样本标准差。Precision、Recall、Micro F1 和 Macro F1 均为 Testing 的严格 typed exact-span 指标。Train 仅统计最终三次种子训练的训练时间，单位为秒，不含调参、验证和测试。
 
@@ -469,7 +469,7 @@ Notebook 的 E1 和 E2 运行目录分别位于 `results/completed/5. fine-tune/
 - [ ] E3 Full fine-tuning；
 - [ ] E4 Standard Random-Token MLM + Full NER；
 - [ ] E5 Whole-Word MLM + Full NER；
-- [ ] E6 Entity-Aware Span MLM + Full NER；
+- [ ] E6 Medical-Term-Only Whole-Span MLM + Full NER；
 - [x] 严格 typed exact-span Precision、Recall 和 F1；
 - [ ] 公平对比的超参数、训练预算和随机种子；
 - [ ] 训练时间、可训练参数和显存成本对比；
@@ -480,7 +480,7 @@ Notebook 的 E1 和 E2 运行目录分别位于 `results/completed/5. fine-tune/
 
 ## 13. 总结
 
-> 本项目在单一 BioBERT backbone 上，先比较 Head-only、Partial 和 Full fine-tuning 三种参数更新范围，再在固定 Full NER 配置下比较 Standard Random-Token、Whole-Word 和 Entity-Aware Span 三种 MLM 任务适应策略，最终使用统一的严格 typed exact-span 实体级指标评估性能、稳定性和计算成本。
+> 本项目在单一 BioBERT backbone 上，先比较 Head-only、Partial 和 Full fine-tuning 三种参数更新范围，再在固定 Full NER 配置下比较 Standard Random-Token、Whole-Word 和 Medical-Term-Only Whole-Span 三种 MLM 任务适应策略，最终使用统一的严格 typed exact-span 实体级指标评估性能、稳定性和计算成本。
 
 ## 14. Notebook 运行与提交
 
